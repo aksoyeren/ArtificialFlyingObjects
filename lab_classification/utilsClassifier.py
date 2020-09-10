@@ -6,6 +6,8 @@ import os.path
 import scipy.misc
 from glob import glob
 import scipy.io as sio
+from skimage.transform import resize
+import imageio
 
 def get_dataset_size(data_folder):
     images = glob(os.path.join(data_folder, 'image', '*.png'))
@@ -31,7 +33,7 @@ def generate_classification_batches(data_folder, image_shape, batch_size, classe
             for i in current_batch:
 
                 image_file = images[i]
-                image = scipy.misc.imresize(scipy.misc.imread(image_file), image_shape)
+                image = resize(imageio.imread(image_file), image_shape)
 
                 # read labels from image_file names
                 labels = np.zeros(shape=(len(classes)), dtype=np.float32)
@@ -58,7 +60,7 @@ def generate_classification_batches(data_folder, image_shape, batch_size, classe
             batch_images = np.array(x_train)
             batch_lables = np.array(y_train)
             # normalize image data (not the labels)
-            batch_images = batch_images.astype('float32') / 255
+            #batch_images = batch_images.astype('float32') / 255
 
             yield (batch_images, batch_lables)
 
