@@ -25,6 +25,6 @@ Then simply run the following commands:
 You can either use the instructions from the [Instructions](LabInstruction.PDF) to use MobaXterm or you can 
 create your own tunnel via ssh using the following commands:
 
-- `ssh -L[desiredlocalport]:localhost:[desiredandfreedistantport] -P 20022 [studentID]@[machinename].hh.se`
+- `ssh -L[desiredlocalport]:localhost:[desiredandfreedistantport] -p 20022 [studentID]@[machinename].hh.se`
 - `jupyter notebook --port [desiredandfreedistantport] --no-browser`
 - Copy paste the url shown on the terminal to a tab on your browser
