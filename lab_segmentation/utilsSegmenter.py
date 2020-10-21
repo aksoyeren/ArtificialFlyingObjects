@@ -61,7 +61,7 @@ def generate_classification_batches(data_folder, image_shape, batch_size, classe
             batch_images = np.array(x_train)
             batch_lables = np.array(y_train)
             # normalize image data (not the labels)
-            batch_images = batch_images.astype('float32') / 255
+            # batch_images = batch_images.astype('float32') / 255
 
             yield (batch_images, batch_lables)
 
