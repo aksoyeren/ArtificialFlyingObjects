@@ -34,7 +34,7 @@ def generate_classification_batches(data_folder, image_shape, batch_size, classe
                 image_file = images[i]
                 image = Image.open(image_file)
                 image = image.resize((image_shape[0], image_shape[1]))
-                image = np.asarray(image)
+                image = np.asarray(image)/255
 
                 # read labels from image_file names
                 labels = np.zeros(shape=(len(classes)), dtype=np.float32)
@@ -65,13 +65,14 @@ def generate_classification_batches(data_folder, image_shape, batch_size, classe
 
             yield (batch_images, batch_lables)
 
-def generate_augmented_classification_batches(in_gen, image_gen):
+def generate_augmented_segmentation_batches(in_gen, image_gen):
     for data, labels in in_gen:
-        aug_data = image_gen.flow(255 * data, labels, batch_size=data.shape[0])
+        aug_data = image_gen.flow(255 * data, batch_size=data.shape[0],seed=42)
+        aug_data_label = image_gen.flow(labels, batch_size=data.shape[0],seed=42)
+        aug_img = next(aug_data)
+        aug_lab = next(aug_data_label)
 
-        aug_img, aug_lab = next(aug_data)
-
-        yield aug_img / 255.0, aug_lab
+        yield aug_img / 255 , aug_lab
 
 def generate_segmentation_batches(data_folder, image_shape, batch_size):
 
@@ -103,7 +104,7 @@ def generate_segmentation_batches(data_folder, image_shape, batch_size):
                 image_file = images[i]
                 image = Image.open(image_file)
                 image = image.resize((image_shape[0], image_shape[1]))
-                image = np.asarray(image)
+                image = np.asarray(image)/255
                 # read labels
                 gt_image_file = labels[os.path.basename(image_file)]
                 gt_image = Image.open(gt_image_file)
@@ -111,7 +112,7 @@ def generate_segmentation_batches(data_folder, image_shape, batch_size):
                 gt_image = np.asarray(gt_image)
 
                 #create background image
-                bkgnd_image = 255*np.ones((image_shape[0],image_shape[1]))
+                bkgnd_image = 255 * np.ones((image_shape[0],image_shape[1]))
                 bkgnd_image  = bkgnd_image - gt_image[:,:,0]
                 bkgnd_image  = bkgnd_image - gt_image[:,:,1]
                 bkgnd_image  = bkgnd_image - gt_image[:,:,2]
@@ -125,7 +126,7 @@ def generate_segmentation_batches(data_folder, image_shape, batch_size):
             batch_images = np.array(x_train)
             batch_lables = np.array(y_train)
             # normalize image data (not the labels)
-            batch_images = batch_images.astype('float32') / 255
+            batch_images = batch_images.astype('float32') 
             batch_lables = batch_lables.astype('float32') / 255
 
             yield (batch_images, batch_lables)
