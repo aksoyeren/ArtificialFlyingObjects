@@ -11,8 +11,8 @@ def flying_objects_config():
     
   cfg.GPU = 0                 # GPU ID
   cfg.DROPOUT_PROB = 0.5      # Probability to keep a node in dropout
-  cfg.IMAGE_WIDTH = 32       # image width
-  cfg.IMAGE_HEIGHT = 32      # image height
+  cfg.IMAGE_WIDTH = 64       # image width
+  cfg.IMAGE_HEIGHT = 64      # image height
   cfg.IMAGE_CHANNEL = 3       # image channel
   cfg.NUM_EPOCHS = 5        # epoch number
   cfg.BATCH_SIZE = 30         # batch size
