@@ -10,17 +10,18 @@ class DataH5:
     validation_data_dir = "../data/FlyingObjectDataset_10K/validation"
     testing_data_dir = "../data/FlyingObjectDataset_10K/testing"
     
-    def __init__(self, img_shape:Tuple[F, F, F], classes:List[T], path='flyingData.hdf5'):
-        self.f = h5py.File(path, 'w')
+    def __init__(self, img_shape:Tuple[F, F, F], classes:List[T], db_path='flyingData.hdf5'):
+        self.db_path = db_path
         self.img_shape = img_shape
         self.img_classes = classes
     
     def create_dataset(self, dir_path:S):
-        imgs = self.get_img_paths(dir_path)
-        grp = self.create_group(imgs, dir_path.rsplit("/",1)[1])
-        
-        self.images_to_group(grp, imgs)
-        
+        with h5py.File(self.db_path, 'w') as f:
+            imgs = self.get_img_paths(dir_path)
+            grp = self.create_group(imgs, dir_path.rsplit("/",1)[1])
+
+            self.images_to_group(grp, imgs)
+
     def create_group(self, imgs:List[T],group_name:S):
         
         num_imgs = len(imgs)
