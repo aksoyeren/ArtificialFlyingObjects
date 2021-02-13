@@ -3,7 +3,7 @@ from pathlib import Path
 import torch
 from torch.utils.data import Dataset,DataLoader
 from easydict import EasyDict as edict
-
+from utils import label_encoder
 
 class CustomDataLoader:
     "Custom loader where we can init dataset for training, validation and testing"
@@ -49,7 +49,8 @@ class HDF5Dataset(Dataset):
 
         assert step in list(df.keys()), "Could not find step in keys!"
         self.data = df[step]['data']
-        self.labels = df[step]['label']
+        print(df[step]['label'])
+        self.labels = label_encoder(df[step]['label'])
         
     def __getitem__(self, index):
         # get data
