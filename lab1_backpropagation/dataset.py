@@ -3,12 +3,16 @@ from pathlib import Path
 import torch
 from torch.utils.data import Dataset,DataLoader
 from easydict import EasyDict as edict
+<<<<<<< HEAD
 import numpy as np
 import os
 import re
 import imageio
 from skimage.transform import resize
 import torchvision
+=======
+
+>>>>>>> parent of 1b99b156... Added label encoder
 
 class H5DataLoader:
     "Custom loader where we can init dataset for training, validation and testing"
