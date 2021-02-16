@@ -29,18 +29,18 @@ class HDF5File:
             grp = f.create_group(group_name)
             self.create_group(grp, imgs)
             self.images_to_group(grp, imgs)
-        
+
         print("Finished loading data..")
     def create_group(self, f, imgs:List[T]):
         
         num_imgs = len(imgs)
         data_shape = (num_imgs, *self.img_shape )
-        label_shape = (num_imgs, len(self.img_classes))
+        label_shape = (num_imgs, 1) #len(self.img_classes) if we want one-hot
         
         #grp = f.create_group(group_name)
         f.create_dataset('data', data_shape, np.float)
         f.create_dataset('label', label_shape, np.float)
-
+        
     def images_to_group(self,group, imgs):
         for i, img_path in enumerate(imgs):
             print(f"Processing {i}", end="\r")
@@ -55,11 +55,11 @@ class HDF5File:
             currLabel = names[1] + "_" + names[2]
             
             assert np.isin(currLabel, self.img_classes), f"ERROR: Label {currLabel} is not defined!"
-            loc = self.img_classes.index(currLabel)
-            labels[loc] = 1
+            numLabel = self.img_classes.index(currLabel)
+            #labels[loc] = 1
         
             group["data"][i, ...] = image
-            group["label"][i, ...] = labels
+            group["label"][i, ...] = numLabel
     
     def get_img_paths(self, dir_path:S):
         return glob(os.path.join(dir_path, 'image', '*.png'))
