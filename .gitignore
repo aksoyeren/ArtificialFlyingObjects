@@ -153,4 +153,6 @@ dmypy.json
 # profiling data
 .prof
 
+
+*.txt
 # End of https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks
