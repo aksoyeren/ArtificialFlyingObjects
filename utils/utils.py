@@ -2,6 +2,7 @@ from sklearn import preprocessing
 import torch
 import torchvision
 import matplotlib.pyplot as plt
+import numpy as np
 
 def label_encoder(labels):
     "Convert list of string labels to tensors"
@@ -20,7 +21,10 @@ def tensor2numpy(data):
     
 def label2rgb(labels):
     return torch.nn.functional.one_hot(labels)
-    
+
+def onehot2int(labels):
+    return np.argmax(labels, axis=0)
+
 def normalize(x):
     """ Min-max normalization (0-1):
     

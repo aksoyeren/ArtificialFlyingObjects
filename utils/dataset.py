@@ -128,13 +128,14 @@ class SegmentationDataset(Dataset):
     
 
 class ClassificationDataset(Dataset):
-    def __init__(self, cfg, classes, transform=None, fineGrained=False):
+    def __init__(self, data_dir, classes,img_shape=None, transform=None, fineGrained=False, predict=False, shuffle=True):
         super().__init__()
+        self.data_dir = data_dir
         self.transform = transform
-        self.hparams = cfg
+        self.img_shape = img_shape
         self.classes = classes
         self.fineGrained = fineGrained
-        self.images = images = glob(os.path.join(data_folder, 'image', '*.png'))
+        self.images = images = glob(os.path.join(data_dir, 'image', '*.png'))
         
     def __getitem__(self, index):
        
@@ -142,7 +143,7 @@ class ClassificationDataset(Dataset):
         image_file = self.images[index]
   
         image = Image.open(image_file)
-        image = image.resize((self.hparams.IMAGE_HEIGHT, self.hparams.IMAGE_WIDTH))
+        image = image.resize(self.img_shape)
         image = np.asarray(image)/255
 
         # read labels from image_file names
@@ -162,3 +163,6 @@ class ClassificationDataset(Dataset):
                 
     def __len__(self):
         return len(self.images)
+    
+    def item(self,index):
+        return self.__getitem__(index)
