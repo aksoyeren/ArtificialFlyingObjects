@@ -94,7 +94,7 @@ class SegmentationDataset(Dataset):
         image_file = self.images[index]
         
         # Preprocessing
-        image = np.array(Image.open(image_file))
+        image = utils.normalize(np.array(Image.open(image_file)))
         image = self.__segment_background(image)
         image = self.transform(image)
 
@@ -102,7 +102,7 @@ class SegmentationDataset(Dataset):
             gt_image_file = self.labels[index]
             
             # read labels
-            gt_image = self.__segment_background(np.array(Image.open(gt_image_file)))
+            gt_image = self.__segment_background(utils.normalize(np.array(Image.open(gt_image_file))))
             gt_image = self.transform(gt_image)
             labels = torch.argmax(gt_image, dim=0)
             
@@ -113,8 +113,7 @@ class SegmentationDataset(Dataset):
         return len(self.images)
     
     def __segment_background(self, img):
-        img = utils.normalize(img)
-        bkgnd_image =  np.ones(self.img_shape)#*255
+        bkgnd_image =  np.ones(self.img_shape)
         bkgnd_image  = bkgnd_image - img[:,:,0]
         bkgnd_image  = bkgnd_image - img[:,:,1]
         bkgnd_image  = bkgnd_image - img[:,:,2]

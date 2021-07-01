@@ -62,7 +62,7 @@ def decision_bondary(model, X = None, Y1 = None, h=0.025):
     plt.tight_layout()
 
 
-def plot_confusion_matrix(cm,
+def confusion_matrix(cm,
                           target_names,
                           title='Confusion matrix',
                           cmap=None,
@@ -109,11 +109,6 @@ def plot_confusion_matrix(cm,
     plt.ylabel('True label')
     plt.xlabel('Predicted label\naccuracy={:0.4f}; misclass={:0.4f}'.format(accuracy, misclass))
     plt.show()
-    
-def grid_of_batch(batch):
-    # This function can be used to plot the images of one batch! Expects the shape: (batch, channels, height,width)
-    grid_img = torchvision.utils.make_grid(batch,pad_value =1)
-    plt.imshow(grid_img.permute(1,2,0))
     
 def train_vs_validation_loss_and_val_accuracy(train_loss, val_loss, val_accuracy):
     fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(15, 10))
@@ -213,62 +208,35 @@ def show_statistics(data_folder, fineGrained=False, title="Input Data Statistics
 class Segmentation():
     
     @staticmethod
-    def data(X, Y, img_nbr_toshow=4, nrow=5):
-        # show testing results
-        fig, axes = plt.subplots(2,1,figsize=(10, 5))
-        fig.suptitle('Data Samples', size=20)
-        flatten_axes = axes.flatten()
-
-        for i, (image, title) in enumerate([
-            (X, f"Input images {0}-{img_nbr_toshow}"),
-            (add_rgb2tensor(Y), f"Truth images {0}-{img_nbr_toshow}")
-        ]):
-
-            grid_image = torchvision.utils.make_grid(image[:img_nbr_toshow], nrow=nrow,pad_value=0.5).numpy().transpose(1,2,0)
-            #image = utils.normalize(image)
-            show(grid_image,ax=axes[i])
-            flatten_axes[i].set_xticks([])
-            flatten_axes[i].set_yticks([])
-            flatten_axes[i].grid(False)
-            flatten_axes[i].set_xlabel(title, size=20)
-
-        plt.show()
+    def data(X:"tensor", Y:"tensor"=None, **plot_kwargs):
+        X = X.permute(0,2,3,1)
+        Y = Y.unsqueeze(1).permute(0,2,3,1)
+        image_with_labels(X, title="Segmentation Input",**plot_kwargs)
+        image_with_labels(Y, title="Segmentation Target",**plot_kwargs)
         
     @staticmethod
-    def results(X, Y, predictions, num_classes, img_nbr_toshow=4, nrow=5):
-
-        fig, axes = plt.subplots(3,1,figsize=(10, 10))
-        fig.suptitle(f"Sample Segmentation Results", size=20)
-        flatten_axes = axes.flatten()
-
-        for i, (image, title) in enumerate([
-            (X, f"Input images {0}-{img_nbr_toshow}"),
-            (add_rgb2tensor(Y,num_classes), f"Truth images {0}-{img_nbr_toshow}"),
-            (add_rgb2tensor(predictions,num_classes), f"Predicted images {0}-{img_nbr_toshow}"),
-        ]):
-            grid_image = torchvision.utils.make_grid(image[:img_nbr_toshow], nrow=nrow,pad_value=0.5).numpy().transpose(1,2,0)
-            show(grid_image,ax=axes[i])
-            flatten_axes[i].set_xticks([])
-            flatten_axes[i].set_yticks([])
-            flatten_axes[i].grid(False)
-            flatten_axes[i].set_xlabel(title, size=20)
-        plt.tight_layout()
-        plt.show()
-
+    def results(X, predictions,Y=None, nimages=4, nrow=5,**plot_kwargs):
+        X = X.permute(0,2,3,1)
+        Y = Y.unsqueeze(1).permute(0,2,3,1)
+        predictions = predictions.unsqueeze(1).permute(0,2,3,1)
+        image_with_labels(X, title="Segmentation Input",**plot_kwargs)
+        image_with_labels(Y, title="Segmentation Target",**plot_kwargs)
+        image_with_labels(predictions, title="Segmentation Prediction",**plot_kwargs)
+        
 class Classification:
     @staticmethod
     def data(X:"tensor", Y:"tensor"=None, **plot_kwargs):
-        X = X.permute(0,3,2,1)
+        X = X.permute(0,2,3,1)
 
         image_with_labels(X,Y, "Classification samples",**plot_kwargs)
     
     @staticmethod
     def results(X, predictions,Y=None, nimages=4, nrow=5,**plot_kwargs):
-        X = X.permute(0,3,2,1)
+        X = X.permute(0,2,3,1)
 
-        image_with_labels(X, Y, "Classification sampled results",**plot_kwargs)
+        image_with_labels(X, Y, "Classification Input",**plot_kwargs)
 
-        image_with_labels(X,predictions, "Classification sampled predictions")
+        image_with_labels(X,predictions, "Classification Predictions",**plot_kwargs)
 
 def convert_4Dimgbatch_2_3Dimgbatch(inputImgBatch:torch.tensor):
     "Expects shape [N,H,W,C]"
@@ -289,7 +257,24 @@ def convert_4Dimgbatch_2_3Dimgbatch(inputImgBatch:torch.tensor):
             color_img[f,maxImg==color] = value
     return color_img
 
+def torch_grid(X,Y,predictions,num_classes=10, nimages=10):
+    fig, axes = plt.subplots(3,1,figsize=(10, 10))
+    fig.suptitle(f"Sample Segmentation Results", size=20)
+    flatten_axes = axes.flatten()
 
+    for i, (image, title) in enumerate([
+        (X, f"Input images {0}-{nimages}"),
+        (add_rgb2tensor(Y,num_classes), f"Truth images {0}-{nimages}"),
+        (add_rgb2tensor(predictions,num_classes), f"Predicted images {0}-{nimages}"),
+    ]):
+        grid_image = torchvision.utils.make_grid(image[:nimages], nrow=nrow,pad_value=0.5).numpy().transpose(1,2,0)
+        show(grid_image,ax=axes[i])
+        flatten_axes[i].set_xticks([])
+        flatten_axes[i].set_yticks([])
+        flatten_axes[i].grid(False)
+        flatten_axes[i].set_xlabel(title, size=20)
+    plt.tight_layout()
+    plt.show()
 
 def image_with_labels(data:"tensor", labels:"tensor"=None, title:str=None, nimages:int=10, nrows:int=2, fig_dimension=1) -> None:
     
