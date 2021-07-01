@@ -15,6 +15,7 @@ class Model(pl.LightningModule):
         #self.val_metric = pl.metrics.Accuracy(compute_on_step=False)
         self.train_metrics = train_metrics
         self.validation_metrics = validation_metrics
+        
     def forward(self, x):
         return self.model(x)
         
@@ -23,8 +24,8 @@ class Model(pl.LightningModule):
         logits = self.forward(x)
         loss = self.criterion(logits,target)
         preds = F.softmax(logits,dim=1)
-        self.log('Train_loss',loss)
-        self.train_metrics(preds, target)
+        self.log('Loss_Train',loss)
+        if self.train_metrics != None: self.train_metrics(preds, target)
         return {'loss':loss}
     
     def validation_step(self, batch: dict, batch_idx: int) -> dict:
@@ -33,16 +34,16 @@ class Model(pl.LightningModule):
 
         loss = self.criterion(logits,target)
         preds = F.softmax(logits,dim=1)
- 
-        self.validation_metrics(preds, target)
-        self.log('Validation_loss',loss)
-        return {'val_loss':loss}
+        
+        if self.validation_metrics != None: self.validation_metrics(preds, target)
+        self.log('loss_Validation',loss)
+        return {'loss_Validation':loss}
     
     def training_epoch_end(self, outputs):
-        self.log_dict(self.train_metrics.compute())
+        if self.train_metrics != None: self.log_dict(self.train_metrics.compute())
         
     def validation_epoch_end(self, outputs):
-        self.log_dict(self.validation_metrics.compute())
+        if self.validation_metrics != None: self.log_dict(self.validation_metrics.compute())
     
     def test_step(self, batch: dict, batch_idx: int) -> dict:
         x, target = batch
@@ -51,7 +52,7 @@ class Model(pl.LightningModule):
         loss = self.criterion(logits,target)
         preds = F.softmax(logits,dim=1)
  
-        return {'test_loss':loss}
+        return {'loss_Test':loss}
         
     def configure_optimizers(self):
         # Note: dont use list if only one item.. Causes silent crashes

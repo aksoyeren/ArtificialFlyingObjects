@@ -1,18 +1,19 @@
 import numpy as np
 from easydict import EasyDict as edict
-from DL_labs.utils.classification import ClassificationComplexity
+from DL_labs.utils.classes import Classes
         
-def flying_objects_config():
-
+def flying_objects_config(fineGrained:bool=False):
+    
+    CLASSIFICATION = Classes(fineGrained)
     cfg = edict()
-    cfg.fineGrained = ClassificationComplexity(False).fineGrained
-    #cfg.CLASSES = classificationComplexity(cfg.fineGrained)
+    cfg.CLASSES = CLASSIFICATION.classes
+    cfg.fineGrained = CLASSIFICATION.fineGrained
+    cfg.NUM_CLASSES = len(cfg.CLASSES)    # number of classes
     
     cfg.training_img_dir = "../data/FlyingObjectDataset_10K/training"
     cfg.validation_img_dir = "../data/FlyingObjectDataset_10K/validation"
     cfg.testing_img_dir = "../data/FlyingObjectDataset_10K/testing"
     
-    cfg.NUM_CLASS = len(cfg.fineGrained)    # number of classes
     cfg.GPU = -1                 # GPU ID or set as -1 in case of using any GPU
     cfg.IMAGE_WIDTH = 128       # image width
     cfg.IMAGE_HEIGHT = 128      # image height

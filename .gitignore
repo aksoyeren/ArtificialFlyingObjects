@@ -155,4 +155,5 @@ dmypy.json
 
 *.ckpt
 *.txt
+logs
 # End of https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks

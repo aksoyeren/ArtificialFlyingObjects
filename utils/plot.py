@@ -11,6 +11,7 @@ import scipy.io as sio
 import torchvision
 import itertools
 from matplotlib import cm
+import math
 
 from . import utils
 
@@ -209,48 +210,66 @@ def show_statistics(data_folder, fineGrained=False, title="Input Data Statistics
 
     print("#" * 70)
 
-def segmentation_data(X, Y, img_nbr_toshow=4, nrow=5):
+class Segmentation():
+    
+    @staticmethod
+    def data(X, Y, img_nbr_toshow=4, nrow=5):
+        # show testing results
+        fig, axes = plt.subplots(2,1,figsize=(10, 5))
+        fig.suptitle('Data Samples', size=20)
+        flatten_axes = axes.flatten()
 
-    # show testing results
-    fig, axes = plt.subplots(2,1,figsize=(10, 5))
-    fig.suptitle('Data Samples', size=20)
-    flatten_axes = axes.flatten()
+        for i, (image, title) in enumerate([
+            (X, f"Input images {0}-{img_nbr_toshow}"),
+            (add_rgb2tensor(Y), f"Truth images {0}-{img_nbr_toshow}")
+        ]):
 
-    for i, (image, title) in enumerate([
-        (X, f"Input images {0}-{img_nbr_toshow}"),
-        (add_rgb2tensor(Y), f"Truth images {0}-{img_nbr_toshow}")
-    ]):
+            grid_image = torchvision.utils.make_grid(image[:img_nbr_toshow], nrow=nrow,pad_value=0.5).numpy().transpose(1,2,0)
+            #image = utils.normalize(image)
+            show(grid_image,ax=axes[i])
+            flatten_axes[i].set_xticks([])
+            flatten_axes[i].set_yticks([])
+            flatten_axes[i].grid(False)
+            flatten_axes[i].set_xlabel(title, size=20)
+
+        plt.show()
         
-        grid_image = torchvision.utils.make_grid(image[:img_nbr_toshow], nrow=nrow,pad_value=0.5).numpy().transpose(1,2,0)
-        #image = utils.normalize(image)
-        show(grid_image,ax=axes[i])
-        flatten_axes[i].set_xticks([])
-        flatten_axes[i].set_yticks([])
-        flatten_axes[i].grid(False)
-        flatten_axes[i].set_xlabel(title, size=20)
+    @staticmethod
+    def results(X, Y, predictions, num_classes, img_nbr_toshow=4, nrow=5):
 
-    plt.show()
-    
-def segmentation_results(X, Y, predictions, num_classes, img_nbr_toshow=4, nrow=5):
+        fig, axes = plt.subplots(3,1,figsize=(10, 10))
+        fig.suptitle(f"Sample Segmentation Results", size=20)
+        flatten_axes = axes.flatten()
 
-    fig, axes = plt.subplots(3,1,figsize=(10, 10))
-    fig.suptitle(f"Sample Segmentation Results", size=20)
-    flatten_axes = axes.flatten()
+        for i, (image, title) in enumerate([
+            (X, f"Input images {0}-{img_nbr_toshow}"),
+            (add_rgb2tensor(Y,num_classes), f"Truth images {0}-{img_nbr_toshow}"),
+            (add_rgb2tensor(predictions,num_classes), f"Predicted images {0}-{img_nbr_toshow}"),
+        ]):
+            grid_image = torchvision.utils.make_grid(image[:img_nbr_toshow], nrow=nrow,pad_value=0.5).numpy().transpose(1,2,0)
+            show(grid_image,ax=axes[i])
+            flatten_axes[i].set_xticks([])
+            flatten_axes[i].set_yticks([])
+            flatten_axes[i].grid(False)
+            flatten_axes[i].set_xlabel(title, size=20)
+        plt.tight_layout()
+        plt.show()
+
+class Classification:
+    @staticmethod
+    def data(X:"tensor", Y:"tensor"=None, **plot_kwargs):
+        X = X.permute(0,3,2,1)
+
+        image_with_labels(X,Y, "Classification samples",**plot_kwargs)
     
-    for i, (image, title) in enumerate([
-        (X, f"Input images {0}-{img_nbr_toshow}"),
-        (add_rgb2tensor(Y,num_classes), f"Truth images {0}-{img_nbr_toshow}"),
-        (add_rgb2tensor(predictions,num_classes), f"Predicted images {0}-{img_nbr_toshow}"),
-    ]):
-        grid_image = torchvision.utils.make_grid(image[:img_nbr_toshow], nrow=nrow,pad_value=0.5).numpy().transpose(1,2,0)
-        show(grid_image,ax=axes[i])
-        flatten_axes[i].set_xticks([])
-        flatten_axes[i].set_yticks([])
-        flatten_axes[i].grid(False)
-        flatten_axes[i].set_xlabel(title, size=20)
-    plt.tight_layout()
-    plt.show()
-    
+    @staticmethod
+    def results(X, predictions,Y=None, nimages=4, nrow=5,**plot_kwargs):
+        X = X.permute(0,3,2,1)
+
+        image_with_labels(X, Y, "Classification sampled results",**plot_kwargs)
+
+        image_with_labels(X,predictions, "Classification sampled predictions")
+
 def convert_4Dimgbatch_2_3Dimgbatch(inputImgBatch:torch.tensor):
     "Expects shape [N,H,W,C]"
     # generate one channel labelled image as ground truth
@@ -272,6 +291,53 @@ def convert_4Dimgbatch_2_3Dimgbatch(inputImgBatch:torch.tensor):
 
 
 
+def image_with_labels(data:"tensor", labels:"tensor"=None, title:str=None, nimages:int=10, nrows:int=2, fig_dimension=1) -> None:
+    
+    if len(data)< nimages:
+        nimages = len(data)
+ 
+    columns = math.ceil(nimages/nrows)
+    
+    if nrows*columns > nimages:
+        nrows = math.ceil(nimages/columns)
+    
+    fig = plt.figure(figsize=(fig_dimension*columns,1.4*fig_dimension*nrows))
+
+    for i in range(1, nimages + 1):
+        ax = fig.add_subplot(nrows, columns, i)
+        ax.imshow(data[i])
+        ax.set_xlabel(f"Label: {labels[i]}") if labels is not None else None
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.grid(False)
+
+    if labels is None:
+        fig.suptitle(title,x=0.45, y=.95) 
+        
+        fig.subplots_adjust(
+            left=0,
+            right=0.9,
+            top=0.9,
+            bottom=0,
+            wspace=0.1,
+            hspace=-0.45
+        )
+    else:
+        fig.suptitle(title) #,x=0.45, y=.95
+        
+        fig.subplots_adjust(
+            #left=0,
+            #right=1,
+            top=0.9,#+((nrows-1)*0.045),
+            #bottom=0,
+            wspace=0,
+            #hspace=0
+        )
+        
+    #plt.tight_layout(h_pad=0,w_pad=0)
+    fig.tight_layout(pad=0, h_pad=0,w_pad=0)
+    plt.show()
+    
 def show(img, ax=None, cmap=None): 
     #np_image = np.transpose(img, (1,2,0))
     if ax:
@@ -287,3 +353,7 @@ def add_rgb2tensor(image,num_classes=4):
     
     
     return cmap_vol
+
+def rgb2index(one_hot_vector):
+    return np.argmax(one_hot_vector, axis=1)
+    

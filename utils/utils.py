@@ -35,3 +35,8 @@ def normalize(x):
         * Union[Tensor,np.ndarray] - Return same type as input but scaled between 0 - 1
     """
     return (x - x.min())/(x.max()-x.min())
+
+def normalize_01(inp: np.ndarray):
+    """Squash image input to the value range [0, 1] (no clipping)"""
+    inp_out = (inp - np.min(inp)) / np.ptp(inp)
+    return inp_out

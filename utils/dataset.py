@@ -9,6 +9,8 @@ import numpy as np
 import torch
 import random
 
+from . import utils
+
 class HDF5Dataset(Dataset):
     def __init__(self, file_path, step='training',transform=None):
         super().__init__()
@@ -67,13 +69,13 @@ class ImageDataset(Dataset):
         return len(self.data)
     
 class SegmentationDataset(Dataset):
-    def __init__(self, data_dir,img_shape=None,transform=None, predict=False, shuffle=True):
+    def __init__(self, data_dir,img_shape=None,transform=None, predict=False, shuffle=True, augmentation=None):
         super().__init__()
         self.transform = transform
+        self.augmentation = augmentation
         self.img_shape = img_shape
         self.predict = predict
         self.images = list(sorted(glob(os.path.join(data_dir, 'image', '*.png'))))
-            
         self.labels = list(sorted(glob(os.path.join(data_dir, 'gt_image', 'gt_*.png'))))
 
         # Shuffle dataset
@@ -86,46 +88,39 @@ class SegmentationDataset(Dataset):
             assert len(self.images) == len(self.labels), "Numbers of image and ground truth labels are not the same>> image nbr: %d gt nbr: %d"  % (n_image, n_labels)
         
         
-    def __getitem__(self, index):
-       
+    def __getitem__(self, index): # TODO: How do I transform two images at once??
+        # Note: Expect (B,H,W) for mask and (B,C,H,W) for image where C is the same size as number of classes
         # Load image path
         image_file = self.images[index]
         
         # Preprocessing
-        image = Image.open(image_file)
-        image = image.resize(self.img_shape)
-        image = np.asarray(image)/255#).astype('float32') 
-        
-        bkgnd_image =  np.ones(self.img_shape)
-        bkgnd_image  = bkgnd_image - image[:,:,0]
-        bkgnd_image  = bkgnd_image - image[:,:,1]
-        bkgnd_image  = bkgnd_image - image[:,:,2]
-        image = np.dstack((image,bkgnd_image))
+        image = np.array(Image.open(image_file))
+        image = self.__segment_background(image)
+        image = self.transform(image)
 
         if not self.predict: 
             gt_image_file = self.labels[index]
             
             # read labels
-            gt_image = Image.open(gt_image_file)
-            gt_image = gt_image.resize(self.img_shape)
-            gt_image = np.asarray(gt_image)/255
-
-            #create background image
-            bkgnd_image =  np.ones(self.img_shape)
-            bkgnd_image  = bkgnd_image - gt_image[:,:,0]
-            bkgnd_image  = bkgnd_image - gt_image[:,:,1]
-            bkgnd_image  = bkgnd_image - gt_image[:,:,2]
-            gt_image = np.dstack((gt_image,bkgnd_image))
-
-            labels = torch.argmax(ff.to_tensor(gt_image).float(), dim=0)
-            return ff.to_tensor(image).float(), labels
-        
-        return ff.to_tensor(image).float()
+            gt_image = self.__segment_background(np.array(Image.open(gt_image_file)))
+            gt_image = self.transform(gt_image)
+            labels = torch.argmax(gt_image, dim=0)
+            
+            return image.float(), labels
+        return image.float()
                 
     def __len__(self):
         return len(self.images)
     
-    
+    def __segment_background(self, img):
+        img = utils.normalize(img)
+        bkgnd_image =  np.ones(self.img_shape)#*255
+        bkgnd_image  = bkgnd_image - img[:,:,0]
+        bkgnd_image  = bkgnd_image - img[:,:,1]
+        bkgnd_image  = bkgnd_image - img[:,:,2]
+   
+        img = np.dstack((img,utils.normalize(bkgnd_image)))
+        return img
 
 class ClassificationDataset(Dataset):
     def __init__(self, data_dir, classes,img_shape=None, transform=None, fineGrained=False, predict=False, shuffle=True):
@@ -141,28 +136,30 @@ class ClassificationDataset(Dataset):
        
         # Load image path
         image_file = self.images[index]
-  
-        image = Image.open(image_file)
-        image = image.resize(self.img_shape)
-        image = np.asarray(image)/255
+
+        image = self.transform(Image.open(image_file))
 
         # read labels from image_file names
-        labels = np.zeros(shape=(len(self.classes)), dtype=np.float32)
-        path, img_name = os.path.split(image_file)
-        names = img_name.split(".")[0].split("_")
-
-        currLabel = names[1] + "_" + names[2] if self.fineGrained else names[1]
-        
-        if np.isin(currLabel, self.classes):
-            loc = self.classes.index(currLabel)
-            labels[loc] = 1
-        else:
-            raise ValueError("ERROR: Label " + str(currLabel) + " is not defined!")
+        labels = self.__extract_label(image_file)
 
         return image, labels
-                
+    
     def __len__(self):
         return len(self.images)
     
     def item(self,index):
         return self.__getitem__(index)
+    
+    def __extract_label(self, image_file):
+        #labels = np.zeros(shape=(len(self.classes)), dtype=np.float32)
+        path, img_name = os.path.split(image_file)
+        names = img_name.split(".")[0].split("_")
+
+        currLabel = names[1] + "_" + names[2] if self.fineGrained else names[1]
+        
+        if currLabel in self.classes:
+            label = self.classes.index(currLabel)
+        else:
+            raise ValueError("ERROR: Label " + str(currLabel) + " is not defined!")
+        
+        return label

@@ -9,8 +9,6 @@ import re
 import imageio
 
 import torchvision
-from easydict import EasyDict as edict
-
 class H5DataLoader(DataLoader):
     "Custom loader where we can init dataset for training, validation and testing"
     def __init__(self, **hparams):
