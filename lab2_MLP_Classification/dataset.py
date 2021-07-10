@@ -1,9 +1,6 @@
 import numpy as np
 
 class MLPData:
-    def __init__(self, seed=0):
-        np.random.seed(seed)
-    
     @staticmethod
     def syn1(N):
         """ data(samples, features)"""
@@ -85,7 +82,7 @@ class MLPData:
         return data, tar
     
     @staticmethod
-    def vowels():
+    def vowels(file_name_train='ae.train', file_name_test='ae.test'):
         def pre_proc(file_name):
             block = []
             x = []
@@ -103,8 +100,8 @@ class MLPData:
             x = [np.asarray(ar) for ar in x]    
             return x
 
-        x_train = pre_proc('ae.train')
-        x_test = pre_proc('ae.test')
+        x_train = pre_proc(file_name_train)
+        x_test = pre_proc(file_name_test)
 
 
         ############## LABELS###########
@@ -139,7 +136,7 @@ class MLPData:
         x_test, x_val, y_test, y_val = train_test_split(x_test, y_test, test_size=0.4, random_state=42)
 
         return x_train, y_train, x_val, y_val, x_test, y_test
-
+    
     @staticmethod
     def regr1(N, v=0):
         """ data(samples, features)"""

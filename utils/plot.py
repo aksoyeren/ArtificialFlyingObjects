@@ -15,13 +15,18 @@ import math
 
 from . import utils
 
-def data_distribution(imgs, shape=(2,2)):
+def data_distribution(imgs:"list|dict", shape=(2,2)):
     f, axs = plt.subplots(*shape, figsize=(10,10))
     axs = axs.flatten()
     
-    for idx, ((d,t), ax) in enumerate(zip(imgs, axs)):
-        ax.scatter(d[:,0],d[:,1], c=t)
-        ax.set_title(f"Plot number: {idx}")
+    if isinstance(imgs,list):
+        for idx, ((d,t), ax) in enumerate(zip(imgs, axs)):
+            ax.scatter(d[:,0],d[:,1], c=t)
+            ax.set_title(f"Plot number: {idx}")
+    elif isinstance(imgs,dict):
+        for (key, (d,t)), ax in zip(imgs.items(), axs):
+            ax.scatter(d[:,0],d[:,1], c=t)
+            ax.set_title(key)
     plt.show()
     
 def decision_bondary(model, X = None, Y1 = None, h=0.025):
@@ -238,6 +243,41 @@ class Classification:
 
         image_with_labels(X,predictions, "Classification Predictions",**plot_kwargs)
 
+class LastFrame:
+    @staticmethod
+    def data(X:"tensor", Y:"tensor"=None, **plot_kwargs):
+        X = X.permute(0,2,3,1)
+        Y = Y.unsqueeze(1).permute(0,2,3,1)
+        image_with_labels(X, title="Segmentation Input",**plot_kwargs)
+        image_with_labels(Y, title="Segmentation Target",**plot_kwargs)
+    
+    @staticmethod
+    def results(X, predictions,Y=None, nimages=4, nrow=5,**plot_kwargs):
+        X = X.permute(0,2,3,1)
+        Y = Y.unsqueeze(1).permute(0,2,3,1)
+        predictions = predictions.unsqueeze(1).permute(0,2,3,1)
+        image_with_labels(X, title="Segmentation Input",**plot_kwargs)
+        image_with_labels(Y, title="Segmentation Target",**plot_kwargs)
+        image_with_labels(predictions, title="Segmentation Prediction",**plot_kwargs)
+        
+class FutureFrame:
+    @staticmethod
+    def data(X:"tensor", Y:"tensor"=None, **plot_kwargs):
+        X = X.permute(0,2,3,1)
+        Y = Y.unsqueeze(1).permute(0,2,3,1)
+        image_with_labels(X, title="Segmentation Input",**plot_kwargs)
+        image_with_labels(Y, title="Segmentation Target",**plot_kwargs)
+    
+    @staticmethod
+    def results(X, predictions,Y=None, nimages=4, nrow=5,**plot_kwargs):
+        X = X.permute(0,2,3,1)
+        Y = Y.unsqueeze(1).permute(0,2,3,1)
+        predictions = predictions.unsqueeze(1).permute(0,2,3,1)
+        image_with_labels(X, title="Segmentation Input",**plot_kwargs)
+        image_with_labels(Y, title="Segmentation Target",**plot_kwargs)
+        image_with_labels(predictions, title="Segmentation Prediction",**plot_kwargs)
+    
+    
 def convert_4Dimgbatch_2_3Dimgbatch(inputImgBatch:torch.tensor):
     "Expects shape [N,H,W,C]"
     # generate one channel labelled image as ground truth

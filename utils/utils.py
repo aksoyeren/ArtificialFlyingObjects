@@ -3,6 +3,7 @@ import torch
 import torchvision
 import matplotlib.pyplot as plt
 import numpy as np
+import argparse
 
 def label_encoder(labels):
     "Convert list of string labels to tensors"
@@ -40,3 +41,18 @@ def normalize_01(inp: np.ndarray):
     """Squash image input to the value range [0, 1] (no clipping)"""
     inp_out = (inp - np.min(inp)) / np.ptp(inp)
     return inp_out
+
+def dict_to_args(d):
+    def dict_to_args_recursive(d, prefix=''):
+        args = argparse.Namespace()
+        for k, v in d.items():
+            if type(v) == dict:
+                args.__setattr__(k, dict_to_args_recursive(v, prefix=k))
+            elif type(v) in [tuple, list]:
+                continue
+            
+            else:
+                args.__setattr__(k, v)
+        return args
+            
+    return dict_to_args_recursive(d)

@@ -48,7 +48,7 @@ class ImageDataset(Dataset):
         super().__init__()
         self.transform = transform
         self.data = [path + '/' + filename for path,filename,*_ in data]
-        self.labels = [label for _,_,_,_,label,_ in data]    #name.split('_',1)[0]
+        self.labels = [label for _,_,_,_,label,_ in data]    
         
     def __getitem__(self, index):
         # get data
@@ -77,7 +77,9 @@ class SegmentationDataset(Dataset):
         self.predict = predict
         self.images = list(sorted(glob(os.path.join(data_dir, 'image', '*.png'))))
         self.labels = list(sorted(glob(os.path.join(data_dir, 'gt_image', 'gt_*.png'))))
-
+        
+        assert self.transform != None, "transform cant be empty!"
+        
         # Shuffle dataset
         if shuffle:
             c = list(zip(self.images, self.labels))
@@ -131,6 +133,8 @@ class ClassificationDataset(Dataset):
         self.fineGrained = fineGrained
         self.images = images = glob(os.path.join(data_dir, 'image', '*.png'))
         
+        assert self.transform != None, "transform cant be empty!"
+        
     def __getitem__(self, index):
        
         # Load image path
@@ -162,3 +166,104 @@ class ClassificationDataset(Dataset):
             raise ValueError("ERROR: Label " + str(currLabel) + " is not defined!")
         
         return label
+    
+    
+    
+    
+    
+
+class LastFramePredictorDataset(Dataset): #(data_folder, image_shape, batch_size):
+    def __init__(self, data_folder,img_shape=None, transform=None, fineGrained=False, predict=False, shuffle=True):
+        super().__init__()
+        self.data_folder = data_folder
+        self.transform = transform
+        self.img_shape = img_shape
+        self.images, self.lastframe = self.image_sequence(sorted(glob(os.path.join(data_folder, 'image', '*.png'))))
+        
+        assert self.transform != None, "transform cant be empty!"
+        
+    def __getitem__(self, index):
+
+        image_file = os.path.join(self.data_folder, "image", self.images[index])
+        last_image = os.path.join(self.data_folder,  "image", self.lastframe[index]) 
+        
+        image = utils.normalize(np.array(Image.open(image_file)))
+        image = self.transform(image)
+
+        gt_image = utils.normalize(np.array(Image.open(last_image)))
+        gt_image = self.transform(gt_image)
+    
+       
+        yield image, gt_image
+    
+    def image_sequence(self, images):
+        sequence = []
+        lastframe = []
+
+        last_frame_id = None
+        last_image_name = None
+        last_action_id = None
+        for image in images:
+            _, img_name = os.path.split(image)
+            action_id, class_id, color_id, frame_id  = img_name.split(".")[0].split("_")
+
+            sequence.append(img_name)
+            if not action_id == last_action_id and last_action_id != None:
+                lastframe.extend([last_image_name]*int(last_frame_id)) #*int(last_frame_id)
+                last_action_id = action_id
+
+            last_action_id = action_id
+            last_frame_id = frame_id
+            last_image_name = img_name
+
+        return sequence, lastframe
+
+class FutureFramePredictorDataset(Dataset): #(data_folder, image_shape, batch_size):
+    
+    def __init__(self, data_folder, sequence_length, img_shape=None, transform=None, fineGrained=False, predict=False, shuffle=True):
+        super().__init__()
+        self.data_folder = data_folder
+        self.sequence_length = sequence_length
+        self.transform = transform
+        self.img_shape = img_shape
+        self.images = self.image_sequence(sorted(glob(os.path.join(data_folder, 'image', '*.png'))))
+        
+        assert self.transform != None, "transform cant be empty!"
+        
+    def __getitem__(self, index):
+        
+        def _transform_time(data):
+            new_data = None
+            for image_file in data:
+                image = utils.normalize(np.array(Image.open(os.path.join(self.data_folder, "image", image_file))))
+                new_data = self.transform(image) if new_data is None else torch.cat([self.transform(image), new_data],dim=0)
+            #print(new_data.shape)
+            return new_data
+        
+        seq, target = self.images[index][:self.sequence_length], self.images[index][self.sequence_length:]
+
+        seque = _transform_time(seq)
+        label = _transform_time(target)
+
+       
+        yield seque, label
+    
+    def image_sequence(self, images):
+        sequence = []
+        sequence_batch = []
+
+        last_action_id = None
+        for image in images:
+            _, img_name = os.path.split(image)
+            action_id, class_id, color_id, frame_id  = img_name.split(".")[0].split("_")
+            
+            if not action_id == last_action_id and last_action_id != None:
+                continue
+            sequence_batch.append(img_name)
+
+            if (len(sequence_batch) > self.sequence_length):# or (not action_id == last_action_id and last_action_id != None):
+                sequence.append(sequence_batch)
+                sequence_batch = []
+            
+            last_action_id = action_id
+        return sequence
