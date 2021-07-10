@@ -10,12 +10,14 @@ import imageio
 
 import torchvision
 class H5DataLoader(DataLoader):
+    """ """
     "Custom loader where we can init dataset for training, validation and testing"
     def __init__(self, **hparams):
         self.hparams = edict(hparams)
         
         
     def train_dataloader(self):
+        """ """
         ds = HDF5Dataset(self.hparams.dataset, step='training')
         
         dataloader = DataLoader(ds,
@@ -25,6 +27,7 @@ class H5DataLoader(DataLoader):
         return dataloader
     
     def validation_dataloader(self):
+        """ """
         ds = HDF5Dataset(self.hparams.dataset, step='validation')
         
         dataloader = DataLoader(ds,
@@ -34,6 +37,7 @@ class H5DataLoader(DataLoader):
         return dataloader
     
     def test_dataloader(self):
+        """ """
         ds = HDF5Dataset(self.hparams.dataset, step='testing')
         
         dataloader = DataLoader(ds,
@@ -44,6 +48,7 @@ class H5DataLoader(DataLoader):
 
 
 class ImageDataLoader:
+    """ """
     "Custom loader where we can init dataset for training, validation and testing"
     def __init__(self, config, datasetModel=None,**hparams):
         
@@ -65,6 +70,7 @@ class ImageDataLoader:
         ])
         
     def train_dataloader(self):
+        """ """
         ds = self.datasetModel(self.hparams, transform=self.training_transforms)
         
         dataloader = DataLoader(ds,
@@ -74,6 +80,7 @@ class ImageDataLoader:
         return dataloader
     
     def validation_dataloader(self):
+        """ """
         ds = self.datasetModel(self.hparams, transform=self.validation_transforms)
         
         dataloader = DataLoader(ds,
@@ -83,6 +90,7 @@ class ImageDataLoader:
         return dataloader
     
     def test_dataloader(self):
+        """ """
     
         ds = self.datasetModel(self.hparams, transform=self.test_transforms)
         
@@ -92,7 +100,19 @@ class ImageDataLoader:
                                 num_workers=self.hparams.NUM_WORKERS)
         return dataloader
     
-    def load_image_paths(self,image_path):
+    def load_image_paths(self,image_path:str) -> "np.ndarray":
+        """Load dataloader images.
+
+        :param image_path: str:
+        :param image_path: str:
+        :param image_path: str:
+        :param image_path: str:
+        :param image_path: str:
+        :param image_path: str:
+        :param image_path: str:
+        :param image_path:str: 
+
+        """
         if self.hparams.fineGrained:
             filenameContext = re.compile('^(\w+?)\_{1}(\d{6})\_{1}([\w]+?)\_{1}(\d{6})',re.DOTALL) 
             img_fix_category = lambda img: [self.hparams.CLASSES.index(img[2]) if i == 2 else img[i] for i, item in enumerate(img)]

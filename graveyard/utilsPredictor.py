@@ -9,10 +9,24 @@ from glob import glob
 import scipy.io as sio
 
 def get_dataset_size(data_folder):
+    """
+
+    :param data_folder: 
+
+    """
     images = glob(os.path.join(data_folder, 'image', '*.png'))
     return len(images)
 
 def generate_classification_batches(data_folder, image_shape, batch_size, classes, fineGrained=False):
+    """
+
+    :param data_folder: param image_shape:
+    :param batch_size: param classes:
+    :param fineGrained: Default value = False)
+    :param image_shape: param classes:
+    :param classes: 
+
+    """
     images = glob(os.path.join(data_folder, 'image', '*.png'))
     n_image = len(images)
 
@@ -66,6 +80,12 @@ def generate_classification_batches(data_folder, image_shape, batch_size, classe
             yield (batch_images, batch_lables)
 
 def generate_augmented_classification_batches(in_gen, image_gen):
+    """
+
+    :param in_gen: param image_gen:
+    :param image_gen: 
+
+    """
     for data, labels in in_gen:
         aug_data = image_gen.flow(255 * data, labels, batch_size=data.shape[0])
 
@@ -74,6 +94,13 @@ def generate_augmented_classification_batches(in_gen, image_gen):
         yield aug_img / 255.0, aug_lab
 
 def generate_segmentation_batches(data_folder, image_shape, batch_size):
+    """
+
+    :param data_folder: param image_shape:
+    :param batch_size: param image_shape:
+    :param image_shape: 
+
+    """
 
     images = glob(os.path.join(data_folder, 'image', '*.png'))
     n_image = len(images)
@@ -132,6 +159,13 @@ def generate_segmentation_batches(data_folder, image_shape, batch_size):
             yield (batch_images, batch_lables)
 
 def generate_lastframepredictor_batches(data_folder, image_shape, batch_size):
+    """
+
+    :param data_folder: param image_shape:
+    :param batch_size: param image_shape:
+    :param image_shape: 
+
+    """
 
     images = sorted(glob(os.path.join(data_folder, 'image', '*.png')))
     n_image = len(images)
@@ -219,6 +253,14 @@ def generate_lastframepredictor_batches(data_folder, image_shape, batch_size):
             yield (batch_images, batch_lables)
 
 def generate_futureframepredictor_batches(data_folder, image_shape, sequence_length, batch_size):
+    """
+
+    :param data_folder: param image_shape:
+    :param sequence_length: param batch_size:
+    :param image_shape: param batch_size:
+    :param batch_size: 
+
+    """
 
     images = sorted(glob(os.path.join(data_folder, 'image', '*.png')))
     n_image = len(images)
@@ -302,6 +344,14 @@ def generate_futureframepredictor_batches(data_folder, image_shape, sequence_len
             yield (batch_images, batch_lables)
 
 def generate_predictor_batches(data_folder, image_shape, sequence_length, batch_size):
+    """
+
+    :param data_folder: param image_shape:
+    :param sequence_length: param batch_size:
+    :param image_shape: param batch_size:
+    :param batch_size: 
+
+    """
 
     images = sorted(glob(os.path.join(data_folder, 'image', '*.png')))
     n_image = len(images)
@@ -384,6 +434,12 @@ def generate_predictor_batches(data_folder, image_shape, sequence_length, batch_
             yield (batch_images, batch_lables)
 
 def get_target_pos(img_file_name, image_shape):
+    """
+
+    :param img_file_name: param image_shape:
+    :param image_shape: 
+
+    """
 
     # get the very first frame of the sequence
     path, img_name = os.path.split(img_file_name)
@@ -424,6 +480,13 @@ def get_target_pos(img_file_name, image_shape):
     return targetPos
 
 def show_statistics(data_folder, fineGrained=False, title="Input Data Statistics"):
+    """
+
+    :param data_folder: param fineGrained:  (Default value = False)
+    :param title: Default value = "Input Data Statistics")
+    :param fineGrained: Default value = False)
+
+    """
 
     images = glob(os.path.join(data_folder, 'image', '*.png'))
     print("\n" + ("#" * 70) + "\n" + ("#" * 21) + title+ ("#" * 21) + "\n" + ("#" * 70) )
@@ -457,6 +520,15 @@ def show_statistics(data_folder, fineGrained=False, title="Input Data Statistics
     print(("#" * 70))
 
 def plot_sample_classification_results(data, truth, classes, predictions,test_acc):
+    """
+
+    :param data: param truth:
+    :param classes: param predictions:
+    :param test_acc: param truth:
+    :param predictions: param truth:
+    :param truth: 
+
+    """
     # show testing results
     fig= plt.figure(figsize=(10, 10))
     fig.suptitle('Sample Classification Results: Prediction (Truth) and Test Accuracy: %' + str(round(100*test_acc, 2)))
@@ -482,6 +554,14 @@ def plot_sample_classification_results(data, truth, classes, predictions,test_ac
     plt.show()
 
 def plot_sample_segmentation_results(data, truth, predictions,test_acc):
+    """
+
+    :param data: param truth:
+    :param predictions: param test_acc:
+    :param truth: param test_acc:
+    :param test_acc: 
+
+    """
 
     fig= plt.figure(figsize=(10, 10))
     fig.suptitle('Sample Segmentation Results: Test Accuracy: %' + str(round(100*test_acc, 2)))
@@ -518,6 +598,12 @@ def plot_sample_segmentation_results(data, truth, predictions,test_acc):
     plt.show()
 
 def plot_sample_data_with_groundtruth(data, truth):
+    """
+
+    :param data: param truth:
+    :param truth: 
+
+    """
 
     # show testing results
     fig= plt.figure(figsize=(10, 10))
@@ -545,6 +631,13 @@ def plot_sample_data_with_groundtruth(data, truth):
     plt.show()
 
 def plot_sample_futureframepredictor_data_with_groundtruth(data, truth, pred):
+    """
+
+    :param data: param truth:
+    :param pred: param truth:
+    :param truth: 
+
+    """
 
     # show testing results
     fig= plt.figure(figsize=(10, 10))
@@ -577,6 +670,13 @@ def plot_sample_futureframepredictor_data_with_groundtruth(data, truth, pred):
     plt.show()
 
 def plot_sample_lastframepredictor_data_with_groundtruth(data, truth, pred):
+    """
+
+    :param data: param truth:
+    :param pred: param truth:
+    :param truth: 
+
+    """
 
     # show testing results
     fig= plt.figure(figsize=(10, 10))
@@ -610,6 +710,12 @@ def plot_sample_lastframepredictor_data_with_groundtruth(data, truth, pred):
     plt.show()
 
 def plot_sample_predictor_data_with_groundtruth(data, truth):
+    """
+
+    :param data: param truth:
+    :param truth: 
+
+    """
 
     # show testing results
     fig= plt.figure(figsize=(10, 10))
@@ -636,6 +742,11 @@ def plot_sample_predictor_data_with_groundtruth(data, truth):
     plt.show()
 
 def convert_4Dimgbatch_2_3Dimgbatch(inputImgBatch):
+    """
+
+    :param inputImgBatch: 
+
+    """
 
     #print('inputImgBatch', inputImgBatch.shape, inputImgBatch.dtype, inputImgBatch.min(), inputImgBatch.max())
     outputImgBatch = np.zeros((inputImgBatch.shape[0], inputImgBatch.shape[1], inputImgBatch.shape[2], 3), dtype=np.float32)

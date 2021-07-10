@@ -12,6 +12,7 @@ import random
 from . import utils
 
 class HDF5Dataset(Dataset):
+    """ """
     def __init__(self, file_path, step='training',transform=None):
         super().__init__()
         self.transform = transform
@@ -41,9 +42,11 @@ class HDF5Dataset(Dataset):
         return self.data.shape[0]
     
     def close(self):
+        """ """
         self.df.close()
         
 class ImageDataset(Dataset):
+    """Dataset to load images"""
     def __init__(self, data,transform=None):
         super().__init__()
         self.transform = transform
@@ -69,6 +72,7 @@ class ImageDataset(Dataset):
         return len(self.data)
     
 class SegmentationDataset(Dataset):
+    """Segmentation dataset for the segmentation lab"""
     def __init__(self, data_dir,img_shape=None,transform=None, predict=False, shuffle=True, augmentation=None):
         super().__init__()
         self.transform = transform
@@ -115,6 +119,7 @@ class SegmentationDataset(Dataset):
         return len(self.images)
     
     def __segment_background(self, img):
+        """Create background target label"""
         bkgnd_image =  np.ones(self.img_shape)
         bkgnd_image  = bkgnd_image - img[:,:,0]
         bkgnd_image  = bkgnd_image - img[:,:,1]
@@ -124,6 +129,7 @@ class SegmentationDataset(Dataset):
         return img
 
 class ClassificationDataset(Dataset):
+    """Classification dataset for the classification lab"""
     def __init__(self, data_dir, classes,img_shape=None, transform=None, fineGrained=False, predict=False, shuffle=True):
         super().__init__()
         self.data_dir = data_dir
@@ -135,7 +141,7 @@ class ClassificationDataset(Dataset):
         
         assert self.transform != None, "transform cant be empty!"
         
-    def __getitem__(self, index):
+    def __getitem__(self, index:int) -> "tuple":
        
         # Load image path
         image_file = self.images[index]
@@ -150,10 +156,16 @@ class ClassificationDataset(Dataset):
     def __len__(self):
         return len(self.images)
     
-    def item(self,index):
+    def item(self,index) -> "tuple":
+        """Get one item from dataset
+
+        :param index: 
+
+        """
         return self.__getitem__(index)
     
-    def __extract_label(self, image_file):
+    def __extract_label(self, image_file:str) -> str:
+        """Extract label from image_file name"""
         #labels = np.zeros(shape=(len(self.classes)), dtype=np.float32)
         path, img_name = os.path.split(image_file)
         names = img_name.split(".")[0].split("_")
@@ -172,7 +184,8 @@ class ClassificationDataset(Dataset):
     
     
 
-class LastFramePredictorDataset(Dataset): #(data_folder, image_shape, batch_size):
+class LastFramePredictorDataset(Dataset):
+    """LastFramePredictor dataset for the GAN lab"""
     def __init__(self, data_folder,img_shape=None, transform=None, fineGrained=False, predict=False, shuffle=True):
         super().__init__()
         self.data_folder = data_folder
@@ -197,6 +210,11 @@ class LastFramePredictorDataset(Dataset): #(data_folder, image_shape, batch_size
         yield image, gt_image
     
     def image_sequence(self, images):
+        """Create an sequence of images and set last image as target.
+
+        :param images: 
+
+        """
         sequence = []
         lastframe = []
 
@@ -219,7 +237,7 @@ class LastFramePredictorDataset(Dataset): #(data_folder, image_shape, batch_size
         return sequence, lastframe
 
 class FutureFramePredictorDataset(Dataset): #(data_folder, image_shape, batch_size):
-    
+    """FutureFramePredicto dataset for the Prediction lab. Use for RNN on images."""
     def __init__(self, data_folder, sequence_length, img_shape=None, transform=None, fineGrained=False, predict=False, shuffle=True):
         super().__init__()
         self.data_folder = data_folder
@@ -233,6 +251,11 @@ class FutureFramePredictorDataset(Dataset): #(data_folder, image_shape, batch_si
     def __getitem__(self, index):
         
         def _transform_time(data):
+            """
+
+            :param data: 
+
+            """
             new_data = None
             for image_file in data:
                 image = utils.normalize(np.array(Image.open(os.path.join(self.data_folder, "image", image_file))))
@@ -248,7 +271,11 @@ class FutureFramePredictorDataset(Dataset): #(data_folder, image_shape, batch_si
        
         yield seque, label
     
-    def image_sequence(self, images):
+    def image_sequence(self, images:list) -> list:
+        """Create an sequence of lists with images. The sequence are defined on the sequence_length.
+
+        :param images: list:
+        """
         sequence = []
         sequence_batch = []
 

@@ -1,6 +1,11 @@
 import numpy as np
 from easydict import EasyDict as edict
 def classificationComplexity(fineGrained):
+    """
+
+    :param fineGrained: 
+
+    """
     return [
         'square_red',
         'square_green',
@@ -23,6 +28,7 @@ def classificationComplexity(fineGrained):
    
 
 def flying_objects_config():
+    """ """
 
     cfg = edict()
     cfg.fineGrained = False

@@ -1,9 +1,14 @@
 import numpy as np
 
 class MLPData:
+    """ """
     @staticmethod
     def syn1(N):
-        """ data(samples, features)"""
+        """data(samples, features)
+
+        :param N: 
+
+        """
         data = np.empty(shape=(N,2), dtype = np.float32)  
         tar = np.empty(shape=(N,), dtype = np.float32) 
         N1 = int(N/2)
@@ -29,7 +34,11 @@ class MLPData:
     
     @staticmethod
     def syn2(N):
-        """ data(samples, features)"""
+        """data(samples, features)
+
+        :param N: 
+
+        """
 
         data = np.empty(shape=(N,2), dtype = np.float32)  
         tar = np.empty(shape=(N,), dtype = np.float32) 
@@ -49,7 +58,11 @@ class MLPData:
     
     @staticmethod
     def syn3(N):
-        """ data(samples, features)"""
+        """data(samples, features)
+
+        :param N: 
+
+        """
         data = np.empty(shape=(N,2), dtype = np.float32)  
         tar = np.empty(shape=(N,), dtype = np.float32) 
         N1 = int(2*N/3)
@@ -76,6 +89,11 @@ class MLPData:
     
     @staticmethod
     def spiral(spiral_path):
+        """
+
+        :param spiral_path: 
+
+        """
         tmp = np.loadtxt(spiral_path)
         data, tar = tmp[:, :2], tmp[:, 2]
 
@@ -83,7 +101,18 @@ class MLPData:
     
     @staticmethod
     def vowels(file_name_train='ae.train', file_name_test='ae.test'):
+        """
+
+        :param file_name_train: Default value = 'ae.train')
+        :param file_name_test: Default value = 'ae.test')
+
+        """
         def pre_proc(file_name):
+            """
+
+            :param file_name: 
+
+            """
             block = []
             x = []
 
@@ -128,8 +157,8 @@ class MLPData:
 
         ## Split into train, validation and test
         num_classes = 9
-        y_train = keras.utils.to_categorical(y_train, num_classes)
-        y_test = keras.utils.to_categorical(y_test, num_classes)
+        y_train = np.eye(num_classes, dtype='uint8')[y_train]#keras.utils.to_categorical(y_train, num_classes)
+        y_test = np.eye(num_classes, dtype='uint8')[y_test]#keras.utils.to_categorical(y_test, num_classes)
 
         from sklearn.model_selection import train_test_split
 
@@ -139,7 +168,12 @@ class MLPData:
     
     @staticmethod
     def regr1(N, v=0):
-        """ data(samples, features)"""
+        """data(samples, features)
+
+        :param N: param v:  (Default value = 0)
+        :param v: Default value = 0)
+
+        """
         data = np.empty(shape=(N,6), dtype = np.float32)  
 
         uni = lambda n : np.random.uniform(0,1,n)

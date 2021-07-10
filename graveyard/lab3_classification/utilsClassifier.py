@@ -10,10 +10,24 @@ from skimage.transform import resize
 import imageio
 
 def get_dataset_size(data_folder):
+    """
+
+    :param data_folder: 
+
+    """
     images = glob(os.path.join(data_folder, 'image', '*.png'))
     return len(images)
 
 def generate_classification_batches(data_folder, image_shape, batch_size, classes, fineGrained=False):
+    """
+
+    :param data_folder: param image_shape:
+    :param batch_size: param classes:
+    :param fineGrained: Default value = False)
+    :param image_shape: param classes:
+    :param classes: 
+
+    """
     images = glob(os.path.join(data_folder, 'image', '*.png'))
     n_image = len(images)
 
@@ -65,6 +79,12 @@ def generate_classification_batches(data_folder, image_shape, batch_size, classe
             yield (batch_images, batch_lables)
 
 def generate_augmented_classification_batches(in_gen, image_gen):
+    """
+
+    :param in_gen: param image_gen:
+    :param image_gen: 
+
+    """
     for data, labels in in_gen:
         aug_data = image_gen.flow(255 * data, labels, batch_size=data.shape[0])
 
@@ -72,6 +92,13 @@ def generate_augmented_classification_batches(in_gen, image_gen):
 
         yield aug_img / 255.0, aug_lab
 def show_statistics(data_folder, fineGrained=False, title="Input Data Statistics"):
+    """
+
+    :param data_folder: param fineGrained:  (Default value = False)
+    :param title: Default value = "Input Data Statistics")
+    :param fineGrained: Default value = False)
+
+    """
 
     images = glob(os.path.join(data_folder, 'image', '*.png'))
     print("\n" + ("#" * 70) + "\n" + ("#" * 21) + title+ ("#" * 21) + "\n" + ("#" * 70) )
@@ -105,6 +132,15 @@ def show_statistics(data_folder, fineGrained=False, title="Input Data Statistics
     print(("#" * 70))
 
 def plot_sample_classification_results(data, truth, classes, predictions,test_acc):
+    """
+
+    :param data: param truth:
+    :param classes: param predictions:
+    :param test_acc: param truth:
+    :param predictions: param truth:
+    :param truth: 
+
+    """
     # show testing results
     fig= plt.figure(figsize=(10, 10))
     fig.suptitle('Sample Classification Results: Prediction (Truth) and Test Accuracy: %' + str(round(100*test_acc, 2)))

@@ -1,11 +1,12 @@
 from collections import OrderedDict
 class Classes():
-    
+    """Define which labels are used for the labs. fineGrained decide if few or many labels should be used."""
     def __init__(self,fineGrained=False):
         self.fineGrained = fineGrained
     
     @property
     def classes(self):
+        """ """
         return [
             'square_red',
             'square_green',
@@ -26,16 +27,18 @@ class Classes():
             'background'
         ]
     @property
-    def fineGrained(self):
+    def fineGrained(self) -> bool:
+        """Is fineGrained enabled"""
         return self.__fineGrained
     
     @fineGrained.setter
-    def fineGrained(self, fineGrained):
+    def fineGrained(self, fineGrained:bool) -> None:
+        """Set fineGrained
+
+        :param fineGrained: bool:
+        """
         self.__fineGrained = fineGrained
 
-    def isfineGrained(self):
-        return self.__fineGrained
-        
     def __str__(self):
         return self.classes
     
@@ -43,7 +46,8 @@ class Classes():
         return len(self.classes)
     
     @property
-    def colormap(self):
+    def colormap(self) -> "OrderedDict":
+        """Colormap for labels and images"""
         return OrderedDict([
             ("square_red",(128, 0, 0)),
             ("square_green",(0, 128, 0)),

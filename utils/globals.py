@@ -3,6 +3,12 @@ from enum import Enum
 from .object import Classes
 
 class Config:
+    """Base configuration. Inherit to class to access all predefined variables/functions from the Config class.
+    
+    Add additional variables to overwrite or extend the class
+
+
+    """
     training_img_dir = "../data/FlyingObjectDataset_10K/training"
     validation_img_dir = "../data/FlyingObjectDataset_10K/validation"
     testing_img_dir = "../data/FlyingObjectDataset_10K/testing"
@@ -22,6 +28,11 @@ class Config:
         self.classification(False)
         
     def classification(self, fineGrained):
+        """Load classification classes with finegrained or not
+
+        :param fineGrained: 
+
+        """
         CLASSIFICATION = Classes(fineGrained)
         self.CLASSES = CLASSIFICATION.classes
         self.fineGrained = CLASSIFICATION.fineGrained
@@ -29,11 +40,13 @@ class Config:
     
 
     def todict(self):
+        """Convert variables in class object to dictionary"""
         data = list(filter(lambda x: True if "__" not in x and not callable(getattr(self, x)) else False, self.__dir__()))
         
         return {x:getattr(self,x) for x in data}
     
     def __repr__(self):
+        """Print variables in class"""
         #return ",\n".join([''.join([x,getattr(self,x)]) for x in self.__dir__() if "__" not in x and not callable(getattr(self, x))])
         data = list(filter(lambda x: True if "__" not in x and not callable(getattr(self, x)) else False, self.__dir__()))
         
