@@ -407,7 +407,48 @@ class FutureFrame:
         image_with_labels(Y, title="Segmentation Target",**plot_kwargs)
         image_with_labels(predictions, title="Segmentation Prediction",**plot_kwargs)
     
+class Detection:
     
+    @staticmethod
+    def __create_palette(N:int):
+        import seaborn as sns
+        palette = sns.color_palette("bright", N)
+        return palette
+    
+    @staticmethod
+    def __labels2rgb(labels:list,pal):
+        return map(lambda x: tuple(map(lambda x: int(x*255), pal[x])), labels)
+    
+    @staticmethod
+    def __draw_bbox(images:"tensor", annotations:"tensor",num_categories:int, **kwargs) -> "tensor":
+        labels = torch.tensor([j for i in annotations for j in i['labels']])
+        palette = Detection.__create_palette(num_categories)
+        imgs = []
+        for (image, annot) in zip(images,annotations):
+            labels = list(map(lambda x: x.item(), annot['labels']))
+            imgs.append(
+                torchvision.utils.draw_bounding_boxes(
+                    (image*255).type(torch.uint8),
+                    annot["boxes"], 
+                    labels=list(map(str,labels)), 
+                    colors=list(Detection.__labels2rgb(labels, palette)), 
+                    **kwargs
+                ).permute(1,2,0)
+            )
+        return torch.stack(imgs)
+    @staticmethod
+    def data(X:"tensor",annotations:"tensor", num_categories:int, plot_kwargs:dict, **draw_bbox) -> None:
+        """Plot input images and target bboxes."""
+        image_with_labels(Detection.__draw_bbox(X,annotations, num_categories, **draw_bbox),fig_dimension=2, title="Detection",**plot_kwargs)
+        
+    @staticmethod
+    def results(X:"tensor",predictions:"tensor",annotations:"tensor", num_categories:int, plot_kwargs:dict, **draw_bbox) -> None:
+        """Plot image input with target bboxes and result bboxes of the predictions."""
+        
+        image_with_labels(Detection.__draw_bbox(X,predictions, num_categories, **draw_bbox),fig_dimension=2, title="Predictions",**plot_kwargs)
+        image_with_labels(Detection.__draw_bbox(X,annotations, num_categories, **draw_bbox),fig_dimension=2, title="Expected",**plot_kwargs)
+        
+        
 def convert_4Dimgbatch_2_3Dimgbatch(inputImgBatch:torch.tensor):
     """Convert a batch of images from 4D to 3D. Maps the input labels to RGB colors.
 
@@ -466,7 +507,7 @@ def torch_grid(X,Y,predictions,num_classes=10, nimages=10):
 def image_with_labels(data:"tensor", labels:"tensor"=None, title:str=None, nimages:int=10, nrows:int=2, fig_dimension=1) -> None:
     """Creates a grid of images with/without labels.
 
-    :param data: tensor":
+    :param data: tensor": B,W,H,C
     :param labels: tensor":  (Default value = None)
     :param title: str:  (Default value = None)
     :param nimages: int:  (Default value = 10)
@@ -479,7 +520,7 @@ def image_with_labels(data:"tensor", labels:"tensor"=None, title:str=None, nimag
     :param nrows:int:  (Default value = 2)
 
     """
-    
+    image_ratio = data[0].shape[0] /data[0].shape[1]
     if len(data)< nimages:
         nimages = len(data)
  
@@ -488,10 +529,9 @@ def image_with_labels(data:"tensor", labels:"tensor"=None, title:str=None, nimag
     if nrows*columns > nimages:
         nrows = math.ceil(nimages/columns)
     
-    fig = plt.figure(figsize=(fig_dimension*columns,1.4*fig_dimension*nrows))
-
-    for i in range(1, nimages + 1):
-        ax = fig.add_subplot(nrows, columns, i)
+    fig = plt.figure(figsize=(fig_dimension*columns,1.4*fig_dimension*nrows*image_ratio))
+    for i in range(0, nimages):
+        ax = fig.add_subplot(nrows, columns, i+1)
         ax.imshow(data[i])
         ax.set_xlabel(f"Label: {labels[i]}") if labels is not None else None
         ax.set_xticks([])

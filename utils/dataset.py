@@ -8,6 +8,9 @@ from PIL import Image
 import numpy as np
 import torch
 import random
+from torchvision.datasets import VisionDataset
+
+from pycocotools.coco import COCO
 
 from . import utils
 
@@ -71,18 +74,25 @@ class ImageDataset(Dataset):
     def __len__(self):
         return len(self.data)
     
-class SegmentationDataset(Dataset):
+class SegmentationDataset(VisionDataset):
     """Segmentation dataset for the segmentation lab"""
-    def __init__(self, data_dir,img_shape=None,transform=None, predict=False, shuffle=True, augmentation=None):
-        super().__init__()
-        self.transform = transform
-        self.augmentation = augmentation
+    def __init__(self, 
+                 data_dir: str,
+                 transforms = None,
+                 transform= None,
+                 target_transform = None,
+                 img_shape=None,
+                 predict=False, 
+                 shuffle=True, 
+                 augmentation=None
+                ):
+        super().__init__(data_dir, transforms, transform, target_transform)
+        #self.transform = transform
+        #self.augmentation = augmentation
         self.img_shape = img_shape
         self.predict = predict
         self.images = list(sorted(glob(os.path.join(data_dir, 'image', '*.png'))))
         self.labels = list(sorted(glob(os.path.join(data_dir, 'gt_image', 'gt_*.png'))))
-        
-        assert self.transform != None, "transform cant be empty!"
         
         # Shuffle dataset
         if shuffle:
@@ -102,17 +112,26 @@ class SegmentationDataset(Dataset):
         # Preprocessing
         image = utils.normalize(np.array(Image.open(image_file)))
         image = self.__segment_background(image)
-        image = self.transform(image)
+        #image = self.transform(image)
 
         if not self.predict: 
             gt_image_file = self.labels[index]
             
             # read labels
             gt_image = self.__segment_background(utils.normalize(np.array(Image.open(gt_image_file))))
-            gt_image = self.transform(gt_image)
+            #gt_image = self.transform(gt_image)
+            
+            
+            if self.transforms is not None:
+                image, gt_image = self.transforms(image, gt_image)
+            
             labels = torch.argmax(gt_image, dim=0)
             
             return image.float(), labels
+        
+        if self.transform is not None:
+            image = self.transform(image)
+            
         return image.float()
                 
     def __len__(self):
@@ -183,28 +202,33 @@ class ClassificationDataset(Dataset):
     
     
     
-
-class LastFramePredictorDataset(Dataset):
+class LastFramePredictorDataset(VisionDataset):
     """LastFramePredictor dataset for the GAN lab"""
-    def __init__(self, data_folder,img_shape=None, transform=None, fineGrained=False, predict=False, shuffle=True):
-        super().__init__()
-        self.data_folder = data_folder
-        self.transform = transform
+    def __init__(self, 
+                 data_dir: str,
+                 transforms = None,
+                 transform= None,
+                 target_transform = None,
+                 img_shape=None,
+                 predict=False, 
+                 shuffle=True, 
+                ):
+        super().__init__(data_dir, transforms, transform, target_transform)
+        self.data_dir = data_dir
         self.img_shape = img_shape
-        self.images, self.lastframe = self.image_sequence(sorted(glob(os.path.join(data_folder, 'image', '*.png'))))
-        
-        assert self.transform != None, "transform cant be empty!"
+        print("Debugging 00")
+        self.images, self.lastframe = self.image_sequence(sorted(glob(os.path.join(data_dir, 'image', '*.png'))))
+        print(self.images)
         
     def __getitem__(self, index):
-
-        image_file = os.path.join(self.data_folder, "image", self.images[index])
-        last_image = os.path.join(self.data_folder,  "image", self.lastframe[index]) 
+        print("Debugging 0")
+        image_file = os.path.join(self.data_dir, "image", self.images[index])
+        last_image = os.path.join(self.data_dir,  "image", self.lastframe[index]) 
         
         image = utils.normalize(np.array(Image.open(image_file)))
-        image = self.transform(image)
-
+        print("Debugging 1")
         gt_image = utils.normalize(np.array(Image.open(last_image)))
-        gt_image = self.transform(gt_image)
+        image, gt_image = self.transforms(image, gt_image)
     
        
         yield image, gt_image
@@ -235,16 +259,27 @@ class LastFramePredictorDataset(Dataset):
             last_image_name = img_name
 
         return sequence, lastframe
-
-class FutureFramePredictorDataset(Dataset): #(data_folder, image_shape, batch_size):
-    """FutureFramePredicto dataset for the Prediction lab. Use for RNN on images."""
-    def __init__(self, data_folder, sequence_length, img_shape=None, transform=None, fineGrained=False, predict=False, shuffle=True):
-        super().__init__()
-        self.data_folder = data_folder
+    
+    def __len__(self):
+        return len(self.images)
+    
+class FutureFramePredictorDataset(VisionDataset):
+    """LastFramePredictor dataset for the GAN lab"""
+    def __init__(self, 
+                 data_dir: str,
+                 sequence_length:int,
+                 transforms = None,
+                 transform= None,
+                 target_transform = None,
+                 img_shape=None,
+                 predict=False, 
+                 shuffle=True, 
+                ):
+        super().__init__(data_dir, transforms, transform, target_transform)
+        self.data_dir = data_dir
         self.sequence_length = sequence_length
-        self.transform = transform
         self.img_shape = img_shape
-        self.images = self.image_sequence(sorted(glob(os.path.join(data_folder, 'image', '*.png'))))
+        self.images = self.image_sequence(sorted(glob(os.path.join(data_dir, 'image', '*.png'))))
         
         assert self.transform != None, "transform cant be empty!"
         
@@ -258,17 +293,15 @@ class FutureFramePredictorDataset(Dataset): #(data_folder, image_shape, batch_si
             """
             new_data = None
             for image_file in data:
-                image = utils.normalize(np.array(Image.open(os.path.join(self.data_folder, "image", image_file))))
-                new_data = self.transform(image) if new_data is None else torch.cat([self.transform(image), new_data],dim=0)
+                image = utils.normalize(np.array(Image.open(os.path.join(self.data_dir, "image", image_file))))
+                new_data = image if new_data is None else torch.cat([image, new_data],dim=0)
             #print(new_data.shape)
             return new_data
         
         seq, target = self.images[index][:self.sequence_length], self.images[index][self.sequence_length:]
 
-        seque = _transform_time(seq)
-        label = _transform_time(target)
+        seque, label = self.transforms(_transform_time(seq),target)
 
-       
         yield seque, label
     
     def image_sequence(self, images:list) -> list:
@@ -294,3 +327,59 @@ class FutureFramePredictorDataset(Dataset): #(data_folder, image_shape, batch_si
             
             last_action_id = action_id
         return sequence
+    
+class CocoDataset(torch.utils.data.Dataset):
+    def __init__(self, root, annotation, transforms=None):
+        self.root = root
+        self.transforms = transforms
+        self.coco = COCO(annotation)
+        self.ids = list(sorted(self.coco.imgs.keys()))
+
+    def __getitem__(self, index):
+        # Image ID
+        img_id = self.ids[index]
+        ann_ids = self.coco.getAnnIds(imgIds=img_id)
+        coco_annotation = self.coco.loadAnns(ann_ids)
+        
+        path = self.coco.loadImgs(img_id)[0]['file_name']
+        # open the input image
+        img = Image.open(os.path.join(self.root, path))
+
+        # number of objects in the image
+        num_objs = len(coco_annotation)
+
+        # Bounding boxes for objects
+        # In coco format, bbox = [xmin, ymin, width, height]
+        # In pytorch, the input should be [xmin, ymin, xmax, ymax]
+        boxes, areas, labels, iscrowd = ([],[],[],[])
+        for i in range(num_objs):
+            xmin = coco_annotation[i]['bbox'][0]
+            ymin = coco_annotation[i]['bbox'][1]
+            xmax = xmin + coco_annotation[i]['bbox'][2]
+            ymax = ymin + coco_annotation[i]['bbox'][3]
+            boxes.append([xmin, ymin, xmax, ymax])
+            labels.append(coco_annotation[i]['category_id'])
+            areas.append(coco_annotation[i]['area'])
+            iscrowd.append(coco_annotation[i]['iscrowd'])
+        
+        boxes = torch.tensor(boxes, dtype=torch.float32)
+        labels = torch.tensor(labels, dtype=torch.uint8)
+        img_id = torch.tensor([img_id])
+        areas = torch.tensor(areas, dtype=torch.float32)
+        iscrowd = torch.tensor(iscrowd, dtype=torch.uint8)
+        
+        # Annotation is in dictionary format
+        my_annotation = {}
+        my_annotation["boxes"] = boxes
+        my_annotation["labels"] = labels
+        my_annotation["image_id"] = img_id
+        my_annotation["area"] = areas
+        my_annotation["iscrowd"] = iscrowd
+
+        if self.transforms is not None:
+            img, my_annotation = self.transforms(img,my_annotation)
+
+        return img, my_annotation
+
+    def __len__(self):
+        return len(self.ids)

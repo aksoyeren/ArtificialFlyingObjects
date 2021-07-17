@@ -28,3 +28,12 @@ create your own tunnel via ssh using the following commands:
 - `ssh -L[desiredlocalport]:localhost:[desiredandfreedistantport] -p 20022 [studentID]@[machinename].hh.se`
 - `jupyter notebook --port [desiredandfreedistantport] --no-browser`
 - Copy paste the url shown on the terminal to a tab on your browser
+
+# Downloads
+
+## Packages
+The required packages exists within the requirements.txt. 
+
+## Project: Object detection - COCO
+From the terminal if we are within the DL_labs directory. Run: "cd data/coco & source urls.txt
+This will change directory and run the files to download the dataset. Note that the dataset is quite large so it will take some time to perform!
