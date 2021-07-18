@@ -351,42 +351,34 @@ class RNN():
         **plot_kwargs:dict
     ) -> None:
         """Plot input images and target images.
-
-        :param X:"tensor": B,C,W,H 
-        :param Y:"tensor":  B,C,W,H (Default value = None)
-        :param **plot_kwargs:dict: 
+        nimages for image_with_labels are set based on the number of rows and sequence length.
+        
+        :param X:"tensor": Input image with format: B,C,W,H 
+        :param Y:"tensor":  Target image with format: B,C,W,H (Default value = None)
+        :param **plot_kwargs:dict: Extra parameters for image_with_labels function
 
         """
-        # Merge channels with batch and move channel to last dimension
-        images = torch.stack(
-            torch.split(X, 3, dim=1)).reshape(
-            (sequence_len*X.shape[0],3,128,128)
-        ).permute(0,2,3,1)
+     
+        channels = 3
+        # Split on channels and stack (B,S,C,W,H)
+        images = torch.stack(torch.split(X,channels,dim=1),dim=1)
+        targets = torch.stack(torch.split(Y,channels,dim=1),dim=1)
         
-        # Merge channels with batch and move channel to last dimension
-        targets = torch.stack(torch.split(Y, 3, dim=1)).reshape((5,3,128,128)).permute(0,2,3,1)
+        batch_size= images.shape[0]
+        width = images.shape[3]
+        height = images.shape[4]
+
+        # Merge input and target (B,C,W,H)
+        image_with_targets = torch.cat(
+            (images,targets),dim=1
+        ).view(batch_size*(sequence_len+1), channels,width,height).permute(0,2,3,1)
         
-        # Add target image at the last image of a sequence
-        image_with_targets = torch.stack([
-            torch.cat(
-                (images[0*sequence_len:(
-                    sequence_len+0*sequence_len
-                )], targets[i].unsqueeze(0)
-                )) for i in range(images.shape[0]//sequence_len)
-        ])
-        # Merge images with targets
-        image_with_targets = image_with_targets.reshape(
-            (
-                image_with_targets.shape[0]*image_with_targets.shape[1],
-                image_with_targets.shape[2],
-                image_with_targets.shape[3],image_with_targets.shape[4]
-            )
-        )
         # Apply label for each image/target in sequence
         labels = [
-            "Target" if i%(sequence_len+1) == 0 and i != 0 else "Label" 
+            "Target" if i%(sequence_len+1) == 0 and i != 0 else f"Serie {i%(sequence_len+1)}" 
             for i in range(1,image_with_targets.shape[0]*(sequence_len+1))
         ]
+        
         image_with_labels(
             image_with_targets, 
             labels=labels,
@@ -420,7 +412,61 @@ class RNN():
         if Y is not None:
             RNN.data(X,Y, sequence_len, nrows=nrows)
         RNN.data(X,predictions, sequence_len, nrows=nrows, title="Input/Prediction")
+    
+    @staticmethod   
+    def diff(
+        X:"tensor",
+        Y:"tensor", 
+        nrows:int=2,
+        diff_color:str="orange",
+        **plot_kwargs:dict
+    ):
+        """Indicate the difference in the input images with the target with orange color."""
+        channels=3
+        X = torch.stack(torch.split(X,channels,dim=1),dim=1)
+        Y = torch.stack(torch.split(Y,channels,dim=1),dim=1)
         
+        batch_size= X.shape[0]
+        width = X.shape[3]
+        height = X.shape[4]
+        sequence_len = X.shape[1]
+   
+        mask =  torch.cat([X,Y],1) - Y
+        mask[mask <= 0] = 0
+        mask = mask.view(batch_size*(sequence_len+1), channels,width,height)
+        image_mask = (255*torch.cat([X, Y],1).view(
+            batch_size*(sequence_len+1), channels,width,height
+        )).type(torch.uint8)
+
+        diff = []
+        for x,y in zip(image_mask, mask):
+            _, masks = torch.unique(y,return_inverse=True)
+
+            masks = masks.type(torch.bool) if masks.max()==0 else torch.sum(masks,0).type(torch.bool)
+
+            diff.append(torchvision.utils.draw_segmentation_masks(
+                x, 
+                masks,
+                alpha=0.9,
+
+                colors=[diff_color]*len(masks)
+            ))
+        
+        diff = torch.stack(diff).permute(0,3,2,1)
+        
+        labels = [
+            "Target" if i%(sequence_len+1) == 0 and i != 0 else f"Serie {i%(sequence_len+1)}" 
+            for i in range(1,diff.shape[0])
+        ]
+        image_with_labels(
+            diff, 
+            labels=labels,
+            label_prefix="",
+            nimages=(sequence_len+1)*nrows,
+            nrows=nrows,
+            title="Diff (orange color) inputs with target",
+            **plot_kwargs
+        )
         
 class Classification:
     """Plot functions for Classification."""

@@ -287,31 +287,30 @@ class FutureFramePredictorDataset(VisionDataset):
         self.data_dir = data_dir
         self.sequence_length = sequence_length
         self.img_shape = img_shape
-        self.images = self.image_sequence(sorted(glob(os.path.join(data_dir, '*.png'))))
-        
-    def __getitem__(self, index):
-        
-        seq, target = self.images[index][:self.sequence_length], self.images[index][self.sequence_length:]
-        
-        seque, label = self.transforms(self._transform_time(seq),self._transform_time(target))
+        self.images = np.array(self.image_sequence(sorted(glob(os.path.join(data_dir, '*.png')))))
 
+    def __getitem__(self, index):
+        # Take last image in sequence as target and rest as sequence
+        seq, target = (self.images[index][:self.sequence_length], self.images[index][self.sequence_length:])
+      
+        # Concatenate over channel and transform images
+        seque, label = self.transforms(self._to_series(seq),self._to_series(target))
+   
         return seque, label
     
     def __len__(self):
         return len(self.images)
     
-    def _transform_time(self, data):
+    def _to_series(self, data):
         """Concatenate images along the channels to create a series
         :param data: 
 
         """
-        new_data = None
-        for image_file in data:
-            image = utils.normalize(np.array(Image.open(os.path.join(self.data_dir, image_file))))
-            new_data = image if new_data is None else np.concatenate([image, new_data],2)
-        #print(new_data.shape)
-        return new_data
-
+        return np.dstack([
+            utils.normalize(np.asarray(Image.open(os.path.join(self.data_dir, image_file))))
+            for image_file in data
+        ])
+            
     def image_sequence(self, images:list) -> list:
         """Create an sequence of lists with images. The sequence are defined on the sequence_length.
 
@@ -321,19 +320,35 @@ class FutureFramePredictorDataset(VisionDataset):
         sequence_batch = []
 
         last_action_id = None
+        last_image_id = None
         for image in images:
             _, img_name = os.path.split(image)
             action_id, class_id, color_id, frame_id  = img_name.split(".")[0].split("_")
             
-            if not action_id == last_action_id and last_action_id != None:
+            # Ensure that last_action_id is not None
+            if last_action_id == None:
+                last_action_id = action_id
+                last_image_id = img_name
                 continue
-            sequence_batch.append(img_name)
+                
+            # We want to break the sequence if we start a new image series!
+            # Observe that the sequence must be 7 so all sequences below are removed.
+            
+            sequence_batch.append(last_image_id)
 
+            # Append and start a new sequence if sequence is full: self.sequence_length inputs + 1 target 
             if (len(sequence_batch) > self.sequence_length):# or (not action_id == last_action_id and last_action_id != None):
                 sequence.append(sequence_batch)
                 sequence_batch = []
             
+            # Last image in sequence is added. Reset batch if new action_id starts
+            if action_id != last_action_id:
+                sequence_batch = []
+                
             last_action_id = action_id
+            last_image_id = img_name
+            
+        #sequence_batch.append(last_image_id)  
         return sequence
     
 class CocoDataset(torch.utils.data.Dataset):

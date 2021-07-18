@@ -1,6 +1,5 @@
 # Artificial Flying Objects Dataset
-Artificial Flying Objects Dataset
-
+Example of a dataset with images moving through a sequence.
 - 128x128x3 
 - Around 30 frames in each sequence, 
 - In total 10K data for training, 2K for validation and 2K for testing
@@ -9,7 +8,8 @@ Artificial Flying Objects Dataset
 
 # Lab instructions
 ## Labs
-Solve each lab from 1-4.
+To pass the course each lab from 1-4 needs to be sent in before their deadlines.
+
 ## Project
 The last part of this course include a project.
 
@@ -18,7 +18,8 @@ The Deep learning course provides three different problems to be solved; **RNN**
 
 The project should be summarised in the Report notebook. 
 
-
+# Installation
+Follow the steps below to setup SSH, Login to Jupyter and setup an virtual environment. The labs uses Tensorboard for logging and instructions is also found below.
 
 ## SERVERS
 bristol, liverpool, luxenburg, amsterdam, london, berlin
@@ -52,11 +53,9 @@ Then simply run the following commands:
 - `conda env create --file conda_environment.yml`
 - Wait until it finish installing all necessary packages and then activate your new environment using `conda activate lab`
 - Just a friendly reminder, you have a quota of 10GB, so please do not do update all to your environment/miniconda.
-# Downloads
 
 ## Packages
 The required packages exists within the requirements.txt. 
-
 
 ## Tensorboard
 To user tensorboard we need to add an additional port to the SSH command. Tensorboard use port 6006 (default) so add ssh -L 6006:localhost:6006 8888:localhost:8888.
