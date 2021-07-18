@@ -216,22 +216,21 @@ class LastFramePredictorDataset(VisionDataset):
         super().__init__(data_dir, transforms, transform, target_transform)
         self.data_dir = data_dir
         self.img_shape = img_shape
-        print("Debugging 00")
-        self.images, self.lastframe = self.image_sequence(sorted(glob(os.path.join(data_dir, 'image', '*.png'))))
-        print(self.images)
+       
+        self.images, self.lastframe = self.image_sequence(sorted(glob(os.path.join(data_dir, '*.png'))))
         
     def __getitem__(self, index):
-        print("Debugging 0")
-        image_file = os.path.join(self.data_dir, "image", self.images[index])
-        last_image = os.path.join(self.data_dir,  "image", self.lastframe[index]) 
+
+        image_file = os.path.join(self.data_dir, self.images[index])
+        last_image = os.path.join(self.data_dir, self.lastframe[index]) 
         
         image = utils.normalize(np.array(Image.open(image_file)))
-        print("Debugging 1")
+    
         gt_image = utils.normalize(np.array(Image.open(last_image)))
         image, gt_image = self.transforms(image, gt_image)
     
        
-        yield image, gt_image
+        return image, gt_image
     
     def image_sequence(self, images):
         """Create an sequence of images and set last image as target.
@@ -248,23 +247,32 @@ class LastFramePredictorDataset(VisionDataset):
         for image in images:
             _, img_name = os.path.split(image)
             action_id, class_id, color_id, frame_id  = img_name.split(".")[0].split("_")
-
-            sequence.append(img_name)
-            if not action_id == last_action_id and last_action_id != None:
-                lastframe.extend([last_image_name]*int(last_frame_id)) #*int(last_frame_id)
+            
+            if last_action_id == None:
                 last_action_id = action_id
+                last_frame_id = frame_id
+                last_image_name = img_name
 
+            
+            if action_id != last_action_id:
+                lastframe.extend([last_image_name]*(int(last_frame_id)-1)) #*int(last_frame_id)
+                #last_action_id = action_id
+                #print("length of sets",len(sequence), len(lastframe), last_frame_id, frame_id, last_frame_id)
+            else:   
+                sequence.append(img_name)
+            
             last_action_id = action_id
             last_frame_id = frame_id
             last_image_name = img_name
-
+        
+        lastframe.extend([last_image_name]*(int(last_frame_id))) #*int(last_frame_id)
         return sequence, lastframe
     
     def __len__(self):
         return len(self.images)
     
 class FutureFramePredictorDataset(VisionDataset):
-    """LastFramePredictor dataset for the GAN lab"""
+    """FutureFramePredictorDataset dataset for the RNN lab"""
     def __init__(self, 
                  data_dir: str,
                  sequence_length:int,
@@ -279,31 +287,31 @@ class FutureFramePredictorDataset(VisionDataset):
         self.data_dir = data_dir
         self.sequence_length = sequence_length
         self.img_shape = img_shape
-        self.images = self.image_sequence(sorted(glob(os.path.join(data_dir, 'image', '*.png'))))
-        
-        assert self.transform != None, "transform cant be empty!"
+        self.images = self.image_sequence(sorted(glob(os.path.join(data_dir, '*.png'))))
         
     def __getitem__(self, index):
         
-        def _transform_time(data):
-            """
-
-            :param data: 
-
-            """
-            new_data = None
-            for image_file in data:
-                image = utils.normalize(np.array(Image.open(os.path.join(self.data_dir, "image", image_file))))
-                new_data = image if new_data is None else torch.cat([image, new_data],dim=0)
-            #print(new_data.shape)
-            return new_data
-        
         seq, target = self.images[index][:self.sequence_length], self.images[index][self.sequence_length:]
+        
+        seque, label = self.transforms(self._transform_time(seq),self._transform_time(target))
 
-        seque, label = self.transforms(_transform_time(seq),target)
-
-        yield seque, label
+        return seque, label
     
+    def __len__(self):
+        return len(self.images)
+    
+    def _transform_time(self, data):
+        """Concatenate images along the channels to create a series
+        :param data: 
+
+        """
+        new_data = None
+        for image_file in data:
+            image = utils.normalize(np.array(Image.open(os.path.join(self.data_dir, image_file))))
+            new_data = image if new_data is None else np.concatenate([image, new_data],2)
+        #print(new_data.shape)
+        return new_data
+
     def image_sequence(self, images:list) -> list:
         """Create an sequence of lists with images. The sequence are defined on the sequence_length.
 

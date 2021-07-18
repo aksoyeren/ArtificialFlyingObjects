@@ -193,10 +193,10 @@ def stats_class(x:list=None, y:list=None, label:str='Training', model:"nn.Module
     sens = tp / nof_p
     spec = tn / nof_n
     acc = (tp + tn) / (len(y))
-    loss = "Not implemented"#model.test(x, y , batch_size =  x.shape[0], verbose=0)
+    #loss = "Not implemented"#model.test(x, y , batch_size =  x.shape[0], verbose=0)
                 
-    A = ['Accuracy', 'Sensitivity', 'Specificity', 'Loss']
-    B = [acc, sens, spec, loss]
+    A = ['Accuracy', 'Sensitivity', 'Specificity']#, 'Loss']
+    B = [acc, sens, spec]#, loss]
     
     print('\n','#'*10,'STATISTICS for {} Data'.format(label), '#'*10, '\n')
     for r in zip(A,B):
@@ -301,6 +301,126 @@ class Segmentation():
         image_with_labels(X, title="Segmentation Input",**plot_kwargs)
         image_with_labels(Y, title="Segmentation Target",**plot_kwargs)
         image_with_labels(predictions, title="Segmentation Prediction",**plot_kwargs)
+
+class GAN():
+    """Plot functions for Segmentation."""
+    
+    @staticmethod
+    def data(X:"tensor", Y:"tensor"=None, **plot_kwargs:dict) -> None:
+        """Plot input images and target images.
+
+        :param X:"tensor": 
+        :param Y:"tensor":  (Default value = None)
+        :param **plot_kwargs:dict: 
+
+        """
+        X = X.permute(0,2,3,1)
+        Y = Y.permute(0,2,3,1)
+        image_with_labels(X, title="Input",**plot_kwargs)
+        image_with_labels(Y, title="Target",**plot_kwargs)
+        
+    @staticmethod
+    def results(X:"tensor", predictions:"tensor",Y:"tensor"=None, nimages:int=4, nrow:int=5,**plot_kwargs:dict)  -> None:
+        """Plot input images, target images and result images of the predictions.
+
+        :param X:"tensor": 
+        :param predictions:"tensor": 
+        :param Y:"tensor":  (Default value = None)
+        :param nimages:int:  (Default value = 4)
+        :param nrow:int:  (Default value = 5)
+        :param **plot_kwargs:dict: 
+
+        """
+        X = X.permute(0,2,3,1)
+        Y = Y.permute(0,2,3,1)
+        predictions = predictions.permute(0,2,3,1)
+        image_with_labels(X, title="Input",**plot_kwargs)
+        image_with_labels(Y, title="Target",**plot_kwargs)
+        image_with_labels(predictions, title="Predictions",**plot_kwargs)
+
+class RNN():
+    """Plot functions for Segmentation."""
+    
+    @staticmethod
+    def data(
+        X:"tensor", 
+        Y:"tensor", 
+        sequence_len:int, 
+        nrows:int=3, 
+        title="Input/Target", 
+        **plot_kwargs:dict
+    ) -> None:
+        """Plot input images and target images.
+
+        :param X:"tensor": B,C,W,H 
+        :param Y:"tensor":  B,C,W,H (Default value = None)
+        :param **plot_kwargs:dict: 
+
+        """
+        # Merge channels with batch and move channel to last dimension
+        images = torch.stack(
+            torch.split(X, 3, dim=1)).reshape(
+            (sequence_len*X.shape[0],3,128,128)
+        ).permute(0,2,3,1)
+        
+        # Merge channels with batch and move channel to last dimension
+        targets = torch.stack(torch.split(Y, 3, dim=1)).reshape((5,3,128,128)).permute(0,2,3,1)
+        
+        # Add target image at the last image of a sequence
+        image_with_targets = torch.stack([
+            torch.cat(
+                (images[0*sequence_len:(
+                    sequence_len+0*sequence_len
+                )], targets[i].unsqueeze(0)
+                )) for i in range(images.shape[0]//sequence_len)
+        ])
+        # Merge images with targets
+        image_with_targets = image_with_targets.reshape(
+            (
+                image_with_targets.shape[0]*image_with_targets.shape[1],
+                image_with_targets.shape[2],
+                image_with_targets.shape[3],image_with_targets.shape[4]
+            )
+        )
+        # Apply label for each image/target in sequence
+        labels = [
+            "Target" if i%(sequence_len+1) == 0 and i != 0 else "Label" 
+            for i in range(1,image_with_targets.shape[0]*(sequence_len+1))
+        ]
+        image_with_labels(
+            image_with_targets, 
+            labels=labels,
+            label_prefix="",
+            title=title, 
+            nrows=nrows, 
+            nimages=(sequence_len+1)*nrows, 
+            fig_dimension=0.8,
+            **plot_kwargs
+        )
+        
+    @staticmethod
+    def results(
+        X:"tensor", 
+        predictions:"tensor",
+        sequence_len:int, 
+        Y:"tensor"=None,  
+        nrows:int=2,
+        **plot_kwargs:dict
+    ) -> None:
+        """Plot input images, target images and result images of the predictions.
+
+        :param X:"tensor": 
+        :param predictions:"tensor": 
+        :param Y:"tensor":  (Default value = None)
+        :param nimages:int:  (Default value = 4)
+        :param nrow:int:  (Default value = 5)
+        :param **plot_kwargs:dict: 
+
+        """
+        if Y is not None:
+            RNN.data(X,Y, sequence_len, nrows=nrows)
+        RNN.data(X,predictions, sequence_len, nrows=nrows, title="Input/Prediction")
+        
         
 class Classification:
     """Plot functions for Classification."""
@@ -504,7 +624,7 @@ def torch_grid(X,Y,predictions,num_classes=10, nimages=10):
     plt.tight_layout()
     plt.show()
 
-def image_with_labels(data:"tensor", labels:"tensor"=None, title:str=None, nimages:int=10, nrows:int=2, fig_dimension=1) -> None:
+def image_with_labels(data:"tensor", labels:"tensor"=None, title:str=None, nimages:int=10, nrows:int=2, fig_dimension=1,title_size=10, label_prefix="Label: ") -> None:
     """Creates a grid of images with/without labels.
 
     :param data: tensor": B,W,H,C
@@ -533,13 +653,13 @@ def image_with_labels(data:"tensor", labels:"tensor"=None, title:str=None, nimag
     for i in range(0, nimages):
         ax = fig.add_subplot(nrows, columns, i+1)
         ax.imshow(data[i])
-        ax.set_xlabel(f"Label: {labels[i]}") if labels is not None else None
+        ax.set_xlabel(f"{label_prefix}{labels[i]}") if labels is not None else None
         ax.set_xticks([])
         ax.set_yticks([])
         ax.grid(False)
 
     if labels is None:
-        fig.suptitle(title,x=0.45, y=.95) 
+        fig.suptitle(title,x=0.5, y=.95, size=title_size) 
         
         fig.subplots_adjust(
             left=0,

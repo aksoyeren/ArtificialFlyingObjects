@@ -8,5 +8,6 @@ class LabConfig(Config):
     training_img_dir = f"{COCO_DATASET}/train2017"
     validation_img_dir = f"{COCO_DATASET}/validation2017"
     training_annotations = f"{COCO_DATASET}/annotations/instances_train2017.json"
+    validation_annotations = f"{COCO_DATASET}/annotations/instances_val2017.json"
     
     
