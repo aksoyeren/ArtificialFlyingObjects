@@ -59,12 +59,9 @@ The required packages exists within the requirements.txt.
 
 
 ## Tensorboard
-* Start
-* Open
-* Add logs
 To user tensorboard we need to add an additional port to the SSH command. Tensorboard use port 6006 (default) so add ssh -L 6006:localhost:6006 8888:localhost:8888.
 
 ## Utils
-To observe the 
+To observe the load of a GPU, open a terminal and write **nvidia-smi**
 * Nvidia-smi
 
