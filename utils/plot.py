@@ -67,6 +67,8 @@ def decision_bondary(model:"torch.nn.Module", X:"tensor"=None, Y1:"tensor"=None,
     
     plt.figure()
     #plt.contourf(xx, yy, Z, cmap=plt.cm.PRGn, alpha = .9) 
+    #print(xx)
+    #print(yy)
     plt.contour(xx, yy, Z, cmap=plt.cm.Paired)
     
     
@@ -80,7 +82,7 @@ def decision_bondary(model:"torch.nn.Module", X:"tensor"=None, Y1:"tensor"=None,
     plt.ylabel('x2')
     plt.xlabel('x1')
     plt.tight_layout()
-
+    plt.show()
 
 def confusion_matrix(cm:"tensor",
                           target_names:list,
@@ -187,10 +189,17 @@ def stats_class(x:list=None, y:list=None, label:str='Training', model:"nn.Module
     model.eval()
     
     y_pr = model(torch.from_numpy(x).float()).reshape(y.shape) #, batch_size = x.shape[0], verbose=0
-                
+    
+   
     nof_p, tp, nof_n, tn = [np.count_nonzero(k) for k in [y==1, y_pr[y==1.] > 0.5, y==0, y_pr[y==0.]<= 0.5]]
     
-    sens = tp / nof_p
+    if nof_p == 0:
+        raise ValueError("No False Positive cant be zero")
+    
+    if nof_n == 0:
+        raise ValueError("No False Negative cant be zero")
+        
+    sens = tp / nof_p 
     spec = tn / nof_n
     acc = (tp + tn) / (len(y))
     #loss = "Not implemented"#model.test(x, y , batch_size =  x.shape[0], verbose=0)
