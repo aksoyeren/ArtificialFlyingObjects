@@ -1,11 +1,3 @@
-# Artificial Flying Objects Dataset
-Example of a dataset with images moving through a sequence.
-- 128x128x3 
-- Around 30 frames in each sequence, 
-- In total 10K data for training, 2K for validation and 2K for testing
-
-![Example Gif](/data/images/ArtificialFlyingObjects.gif)
-
 # Lab instructions
 ## Labs
 To pass the course each lab from 1-4 needs to be sent in before their deadlines.
