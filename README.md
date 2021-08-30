@@ -45,6 +45,7 @@ Then simply run the following commands:
 - `conda env create --file conda_environment.yml`
 - Wait until it finish installing all necessary packages and then activate your new environment using `conda activate lab`
 - Just a friendly reminder, you have a quota of 10GB, so please do not do update all to your environment/miniconda.
+- Install the packages with `pip install -r requirements.txt`
 
 ## Packages
 The required packages exists within the requirements.txt. 
