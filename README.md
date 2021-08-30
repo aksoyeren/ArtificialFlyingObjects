@@ -42,8 +42,8 @@ To install miniconda firstly download the installer to the desired machine [here
 Then simply run the following commands:
 
 - `chmod +x Miniconda3-latest-Linux-x86_64.sh` <- This will make the `.sh` executable
-- `conda env create --file conda_environment.yml`
-- Wait until it finish installing all necessary packages and then activate your new environment using `conda activate lab`
+- `conda create -n DL_lab python=3.8`
+- Wait until it finish installing all necessary packages and then activate your new environment using `conda activate DL_lab`
 - Just a friendly reminder, you have a quota of 10GB, so please do not do update all to your environment/miniconda.
 - Install the packages with `pip install -r requirements.txt`
 
