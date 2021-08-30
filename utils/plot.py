@@ -315,7 +315,7 @@ class GAN():
     """Plot functions for Segmentation."""
     
     @staticmethod
-    def data(X:"tensor", Y:"tensor"=None, **plot_kwargs:dict) -> None:
+    def data(X:"tensor", **plot_kwargs:dict) -> None:
         """Plot input images and target images.
 
         :param X:"tensor": 
@@ -324,12 +324,19 @@ class GAN():
 
         """
         X = X.permute(0,2,3,1)
-        Y = Y.permute(0,2,3,1)
-        image_with_labels(X, title="Input",**plot_kwargs)
-        image_with_labels(Y, title="Target",**plot_kwargs)
+        #Y = Y.permute(0,2,3,1)
+        
+        # Apply label for each image
+        labels = [
+            f"{i%(X.shape[0])}" 
+            for i in range(1,X.shape[0])
+        ]
+        
+        image_with_labels(X, labels=labels,title="Training input/Real images",**plot_kwargs)
+        #image_with_labels(Y, title="Target",**plot_kwargs)
         
     @staticmethod
-    def results(X:"tensor", predictions:"tensor",Y:"tensor"=None, nimages:int=4, nrow:int=5,**plot_kwargs:dict)  -> None:
+    def results(X:"tensor", predictions:"tensor", nimages:int=4, nrow:int=5,**plot_kwargs:dict)  -> None:
         """Plot input images, target images and result images of the predictions.
 
         :param X:"tensor": 
@@ -341,11 +348,9 @@ class GAN():
 
         """
         X = X.permute(0,2,3,1)
-        Y = Y.permute(0,2,3,1)
         predictions = predictions.permute(0,2,3,1)
-        image_with_labels(X, title="Input",**plot_kwargs)
-        image_with_labels(Y, title="Target",**plot_kwargs)
-        image_with_labels(predictions, title="Predictions",**plot_kwargs)
+        image_with_labels(X, title="Training input/Real images",**plot_kwargs)
+        image_with_labels(predictions, title="Generated images/Fake images",**plot_kwargs)
 
 class RNN():
     """Plot functions for Segmentation."""

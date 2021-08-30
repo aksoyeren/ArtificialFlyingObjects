@@ -1,5 +1,5 @@
-from DL_labs.utils.globals import Config
-from DL_labs.utils.object import Classes
+from utils.globals import Config
+from utils.object import Classes
 
 class LabConfig(Config):
     """Configuration for lab. Inherit variables from the Config class.

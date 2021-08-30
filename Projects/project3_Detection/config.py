@@ -1,4 +1,4 @@
-from DL_labs.utils.globals import Config
+from utils.globals import Config
 
 
 class LabConfig(Config):
