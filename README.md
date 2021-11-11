@@ -14,7 +14,7 @@ The project should be summarised in the Report notebook.
 Follow the steps below to setup SSH, Login to Jupyter and setup an virtual environment. The labs uses Tensorboard for logging and instructions is also found below.
 
 ## SERVERS
-bristol, liverpool, luxenburg, amsterdam, london, berlin
+Lund, Amsterdam, Berlin, Copenhagen, Barcelona, Istanbul, Bermingham, Liverpool, Bristol
 
 ## SSH
 The school provides GPU servers for the students which can be accessed through tools like CMD or Putty.
@@ -37,16 +37,11 @@ The parameter -L allow use to define a server port, local ip and port to access 
 ## Virtual Environment
 * Conda
 * Install requirements
-To install miniconda firstly download the installer to the desired machine [here](https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh).
 
 Then simply run the following commands:
-
-- `chmod +x Miniconda3-latest-Linux-x86_64.sh` <- This will make the `.sh` executable
-- `conda create -n DL_lab python=3.8`
-- Wait until it finish installing all necessary packages and then activate your new environment using `conda activate DL_lab`
-- Just a friendly reminder, you have a quota of 10GB, so please do not do update all to your environment/miniconda.
-- Install the packages with `pip install -r requirements.txt`
-
+- `source activate`
+- Install the environment with `conda env create -f deeplearn.yml`
+- Do not forget to run `source activate` and `conda activate deeplearn` everytime you login
 ## Packages
 The required packages exists within the requirements.txt. 
 

@@ -27,7 +27,7 @@ class LitProgressBar(progress.ProgressBarBase):
 
         print("",end="", flush=True)
 
-    def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx):
+    def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
         """
 
         :param trainer: param pl_module:
@@ -38,7 +38,7 @@ class LitProgressBar(progress.ProgressBarBase):
         :param batch: 
 
         """
-        super().on_train_batch_end(trainer, pl_module, outputs,batch, batch_idx, dataloader_idx) 
+        super().on_train_batch_end(trainer, pl_module, outputs,batch, batch_idx) 
         
         con = f'Epoch {trainer.current_epoch+1} [{batch_idx+1:.00f}/{self.total_train_batches:.00f}] {self.get_progress_bar_dict(trainer)}'
         

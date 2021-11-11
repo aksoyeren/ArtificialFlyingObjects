@@ -12,7 +12,7 @@ class Config:
     testing_img_dir = "../data/FlyingObjectDataset_10K/testing"
     
     SEED = 420
-    GPU = -1                 # GPU ID or set as -1 in case of using any GPU
+    GPU =0                 # GPU ID or set as -1 in case of using any GPU
     IMAGE_WIDTH = 128       # image width
     IMAGE_HEIGHT = 128      # image height
     IMAGE_CHANNEL = 3       # image channel
